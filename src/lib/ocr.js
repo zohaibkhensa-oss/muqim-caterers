@@ -1,14 +1,28 @@
 // Menu OCR via Groq vision model.
-// Key comes from VITE_GROQ_API_KEY — note: it's bundled into the frontend,
-// so use a free-tier key and rotate if abused. For production, proxy via
-// a Supabase Edge Function so the key stays server-side.
+// The Groq key lives in Supabase `settings` (authenticated-only) so it never
+// ships in the frontend bundle. VITE_GROQ_API_KEY works as a local dev override.
+
+import { supabase, supabaseReady } from '@/lib/supabase'
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-// Any vision-capable Groq model — llama-4 scout/maverick when enabled on the account
-const MODEL = import.meta.env.VITE_GROQ_MODEL || 'meta-llama/llama-4-maverick-17b-128e-instruct'
+const DEFAULT_MODEL = 'meta-llama/llama-4-maverick-17b-128e-instruct'
 
-const key = import.meta.env.VITE_GROQ_API_KEY
-export const ocrEnabled = Boolean(key)
+let cached
+
+// OCR needs Supabase (for the server-side key) unless a dev env key is set.
+export const ocrEnabled = Boolean(import.meta.env.VITE_GROQ_API_KEY) || supabaseReady
+
+async function ocrConfig() {
+  if (cached) return cached
+  cached = { key: import.meta.env.VITE_GROQ_API_KEY, model: DEFAULT_MODEL }
+  if (!cached.key && supabaseReady) {
+    const { data } = await supabase
+      .from('settings').select('key, value').in('key', ['groq_api_key', 'groq_model'])
+    const rows = Object.fromEntries((data ?? []).map((r) => [r.key, r.value]))
+    cached = { key: rows.groq_api_key, model: rows.groq_model || DEFAULT_MODEL }
+  }
+  return cached
+}
 
 const fileToDataURL = (file) =>
   new Promise((resolve, reject) => {
@@ -35,13 +49,15 @@ function matchDish(raw, catalog) {
  * Returns null if OCR unavailable or the file isn't an image (caller falls back).
  */
 export async function scanMenuImage(file, catalog) {
-  if (!key || !file.type.startsWith('image/')) return null
+  if (!file.type.startsWith('image/')) return null
+  const { key, model } = await ocrConfig()
+  if (!key) return null
 
   const res = await fetch(GROQ_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       response_format: { type: 'json_object' },
       max_completion_tokens: 1024,
       messages: [
