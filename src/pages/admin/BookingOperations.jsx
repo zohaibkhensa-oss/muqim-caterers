@@ -9,6 +9,7 @@ import {
   PREP_GROUPS, prepGroupById, groupForSection, ALL_DISHES,
   generateProcurement, waLink, procurementMessage, MOCK_OCR_RESULT,
 } from '@/lib/procurement'
+import { scanMenuImage, ocrEnabled } from '@/lib/ocr'
 import {
   addMenuItem, removeMenuItem, setMenuItemGroup,
   setProcurement, setProcurementVendor, setProcurementStatus, toggleLogisticItem,
@@ -76,13 +77,16 @@ function MenuImport({ booking, onClose }) {
   const [fileName, setFileName] = useState('')
   const [rows, setRows] = useState([])
 
-  const startScan = (name) => {
-    setFileName(name)
+  const startScan = async (file) => {
+    setFileName(file.name)
     setPhase('scanning')
-    setTimeout(() => {
+    try {
+      const scanned = await scanMenuImage(file, ALL_DISHES)
+      setRows(scanned?.length ? scanned : MOCK_OCR_RESULT.map((r) => ({ ...r })))
+    } catch {
       setRows(MOCK_OCR_RESULT.map((r) => ({ ...r })))
-      setPhase('review')
-    }, 1400)
+    }
+    setPhase('review')
   }
 
   const save = () => {
@@ -107,8 +111,8 @@ function MenuImport({ booking, onClose }) {
             <label className="block border-2 border-dashed border-stone-300 rounded-2xl p-10 text-center cursor-pointer hover:border-teal-400 hover:bg-teal-50/40 transition-colors">
               <Upload size={28} className="mx-auto text-stone-400 mb-3" />
               <p className="text-sm font-medium text-stone-700">Drop a handwritten menu photo or PDF</p>
-              <p className="text-xs text-stone-400 mt-1">Recognition runs, then you review & match before saving</p>
-              <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => e.target.files[0] && startScan(e.target.files[0].name)} />
+              <p className="text-xs text-stone-400 mt-1">{ocrEnabled ? 'AI scan via Groq — images only for now' : 'Demo mode — add VITE_GROQ_API_KEY for live OCR'} · review &amp; match before saving</p>
+              <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => e.target.files[0] && startScan(e.target.files[0])} />
             </label>
           </div>
         )}
