@@ -46,6 +46,7 @@ create table if not exists staff (
   id text primary key,
   name text not null,
   role text,
+  perm_role text,                        -- owner|sales|coordinator|chef|procurement|service|accounts
   phone text
 );
 
@@ -71,6 +72,7 @@ create table if not exists bookings (
   menu_items jsonb not null default '[]',
   logistics jsonb not null default '[]',
   procurement jsonb,
+  extra jsonb,                            -- tasks, leadStatus, source, estimate, closing, versions
   created_at timestamptz not null default now()
 );
 

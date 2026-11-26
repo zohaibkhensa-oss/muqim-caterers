@@ -5,8 +5,9 @@ import { format } from 'date-fns'
 import { ArrowLeft, Phone, Mail, MapPin, Users, CalendarDays, NotebookPen, Send, IndianRupee, Plus, Trash2 } from 'lucide-react'
 import StatusBadge from '@/components/StatusBadge'
 import { BOOKING_STATUSES, statusById, cateringTypeById, EXPENSE_CATEGORIES, fmtINR, packageById } from '@/data/mock'
-import { moveBooking, addNote, assignStaff, addReceipt, addExpense, selectBookingById } from '@/features/bookings/bookingsSlice'
+import { moveBooking, addNote, assignStaff, addReceipt, addExpense, selectBookingById, setQuote } from '@/features/bookings/bookingsSlice'
 import BookingOperations from '@/pages/admin/BookingOperations'
+import { Readiness, EventTasks, EstimateCard, ClosingSection, StaffView } from '@/pages/admin/EventControl'
 
 const card = 'bg-white rounded-xl border border-stone-200 p-5'
 
@@ -19,6 +20,8 @@ export default function AdminBookingDetail() {
   const [receipt, setReceipt] = useState({ label: 'Payment', amount: '' })
   const [expense, setExpense] = useState({ category: 'Purchases', label: '', amount: '' })
   const [tab, setTab] = useState('overview')
+  const [editQuote, setEditQuote] = useState(false)
+  const [quoteAmt, setQuoteAmt] = useState('')
 
   if (!booking) {
     return (
@@ -75,6 +78,7 @@ export default function AdminBookingDetail() {
         {[
           { id: 'overview', label: 'Overview' },
           { id: 'operations', label: `Operations${(booking.menuItems ?? []).length ? ` · ${booking.menuItems.length} dishes` : ''}` },
+          { id: 'staffview', label: 'Staff view' },
         ].map((t) => (
           <button
             key={t.id}
@@ -89,6 +93,8 @@ export default function AdminBookingDetail() {
       </div>
 
       {tab === 'operations' && <BookingOperations booking={booking} />}
+
+      {tab === 'staffview' && <StaffView booking={booking} staff={staff} />}
 
       {tab === 'overview' && <div className="grid lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">
@@ -115,6 +121,9 @@ export default function AdminBookingDetail() {
             </div>
           </section>
 
+          <Readiness booking={booking} />
+          <EventTasks booking={booking} />
+
           <section className={card}>
             <h3 className="font-semibold text-teal-900 mb-4">Menu & quote</h3>
             {pkg ? (
@@ -131,11 +140,21 @@ export default function AdminBookingDetail() {
             ) : (
               <p className="text-sm text-stone-600 mb-4">Custom menu — see notes below.</p>
             )}
-            <div className="border-t border-stone-100 pt-4 flex justify-between items-center">
-              <span className="text-sm text-stone-500">{booking.guests} guests × {pkg ? fmtINR(pkg.pricePerHead) : '—'}</span>
-              <span className="text-lg font-semibold text-teal-800">
-                {booking.amount != null ? fmtINR(booking.amount) : 'Quote pending'}
+            <div className="border-t border-stone-100 pt-4 flex justify-between items-center gap-3">
+              <span className="text-sm text-stone-500">
+                {booking.guests} guests × {pkg ? fmtINR(pkg.pricePerHead) : '—'}
+                {(booking.quoteVersions ?? []).length > 0 && <span className="ml-2 text-[10px] font-bold text-stone-400">v{(booking.quoteVersions).length}</span>}
               </span>
+              {editQuote ? (
+                <form className="flex gap-1.5" onSubmit={(e) => { e.preventDefault(); const a = Number(quoteAmt); if (a > 0) { dispatch(setQuote({ id: booking.id, amount: a })); } setEditQuote(false) }}>
+                  <input type="number" autoFocus value={quoteAmt} onChange={(e) => setQuoteAmt(e.target.value)} className="w-28 rounded-lg border border-stone-200 px-2 py-1 text-sm" placeholder="₹" />
+                  <button className="rounded-lg bg-teal-700 text-cream-50 px-2.5 text-xs font-semibold">Save</button>
+                </form>
+              ) : (
+                <button onClick={() => { setQuoteAmt(booking.amount ?? ''); setEditQuote(true) }} className="text-lg font-semibold text-teal-800 hover:underline" title="Edit quotation (creates a new version)">
+                  {booking.amount != null ? fmtINR(booking.amount) : 'Set quote'}
+                </button>
+              )}
             </div>
           </section>
 
@@ -227,6 +246,9 @@ export default function AdminBookingDetail() {
               </span>
             </div>
           </section>
+
+          <EstimateCard booking={booking} />
+          <ClosingSection booking={booking} />
 
           <section className={card}>
             <h3 className="font-semibold text-teal-900 mb-4">Internal notes</h3>

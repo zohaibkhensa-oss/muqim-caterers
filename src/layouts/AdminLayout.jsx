@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react'
 import { NavLink, Navigate, Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Kanban, CalendarDays, BookOpen, Users,
-  ChefHat, BarChart3, Truck, ExternalLink, LogOut,
+  ChefHat, BarChart3, Truck, ExternalLink, LogOut, Inbox, ListChecks,
 } from 'lucide-react'
 import { supabaseReady } from '@/lib/supabase'
 import { auth } from '@/lib/db'
 
 const nav = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/admin/leads', label: 'Lead Inbox', icon: Inbox },
+  { to: '/admin/tasks', label: 'Tasks', icon: ListChecks },
   { to: '/admin/bookings', label: 'Bookings', icon: Kanban },
   { to: '/admin/calendar', label: 'Calendar', icon: CalendarDays },
   { to: '/admin/menus', label: 'Menus', icon: BookOpen },

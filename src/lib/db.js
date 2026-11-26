@@ -23,6 +23,7 @@ const toBooking = (r) => ({
   logistics: r.logistics ?? [],
   procurement: r.procurement ?? null,
   createdAt: r.created_at,
+  ...(r.extra ?? {}),
 })
 
 const toPackage = (r) => ({
@@ -62,6 +63,12 @@ const fromBooking = (b) => ({
   menu_items: b.menuItems,
   logistics: b.logistics,
   procurement: b.procurement,
+  extra: {
+    tasks: b.tasks, leadStatus: b.leadStatus, source: b.source, followUp: b.followUp,
+    menuVersions: b.menuVersions, menuApproved: b.menuApproved,
+    quoteVersions: b.quoteVersions, estimate: b.estimate, closing: b.closing,
+    possibleDuplicate: b.possibleDuplicate, duplicateOf: b.duplicateOf,
+  },
   created_at: b.createdAt,
 })
 
@@ -82,7 +89,7 @@ export async function loadAll() {
   return {
     packages: packages.data.map(toPackage),
     vendors: vendors.data,
-    staff: staff.data,
+    staff: staff.data.map((r) => ({ ...r, permRole: r.perm_role })),
     clients: clients.data.map((c) => ({ id: c.id, name: c.name, phone: c.phone, email: c.email, since: c.created_at })),
     bookings: bookings.data.map(toBooking),
   }

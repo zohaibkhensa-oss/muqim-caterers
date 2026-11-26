@@ -29,14 +29,14 @@ insert into vendors (id, name, category, phone, items, balance) values
 ('vn-10', 'Imam Kirana & General Store', 'Grocery', '+91 94150 10101', 'Dor rashan — rice, atta, oil, spices', 2100)
 on conflict (id) do nothing;
 
-insert into staff (id, name, role, phone) values
-('st-1', 'Imran Sheikh', 'Head Chef', '+91 80042 11223'),
-('st-2', 'Rafiq Ansari', 'Chef — Biryani', '+91 80042 44556'),
-('st-3', 'Salman Qureshi', 'Chef — Kebabs', '+91 80042 77889'),
-('st-4', 'Ayesha Khan', 'Event Coordinator', '+91 78007 33445'),
-('st-5', 'Bilal Ahmed', 'Service Lead', '+91 78007 66778'),
-('st-6', 'Farhan Malik', 'Service Staff', '+91 78007 99001'),
-('st-7', 'Naved Ali', 'Driver / Logistics', '+91 78007 22334')
+insert into staff (id, name, role, perm_role, phone) values
+('st-1', 'Imran Sheikh', 'Head Chef', 'chef', '+91 80042 11223'),
+('st-2', 'Rafiq Ansari', 'Chef — Biryani', 'chef', '+91 80042 44556'),
+('st-3', 'Salman Qureshi', 'Chef — Kebabs', 'chef', '+91 80042 77889'),
+('st-4', 'Ayesha Khan', 'Event Coordinator', 'coordinator', '+91 78007 33445'),
+('st-5', 'Bilal Ahmed', 'Service Lead', 'service', '+91 78007 66778'),
+('st-6', 'Farhan Malik', 'Service Staff', 'service', '+91 78007 99001'),
+('st-7', 'Naved Ali', 'Driver / Logistics', 'service', '+91 78007 22334')
 on conflict (id) do nothing;
 
 insert into bookings (id, ref, status, customer, event_type, catering_type, event_date, guests, pax, venue, package_id, amount, notes, status_history, receipts, expenses, menu_items) values

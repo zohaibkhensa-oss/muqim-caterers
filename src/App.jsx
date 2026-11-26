@@ -18,6 +18,8 @@ import AdminClients from '@/pages/admin/AdminClients'
 import AdminStaff from '@/pages/admin/AdminStaff'
 import AdminVendors from '@/pages/admin/AdminVendors'
 import AdminReports from '@/pages/admin/AdminReports'
+import AdminLeads from '@/pages/admin/AdminLeads'
+import AdminTasks from '@/pages/admin/AdminTasks'
 import AdminLogin from '@/pages/admin/AdminLogin'
 
 export default function App() {
@@ -36,6 +38,8 @@ export default function App() {
       <Route path="admin/login" element={<AdminLogin />} />
       <Route path="admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
+        <Route path="leads" element={<AdminLeads />} />
+        <Route path="tasks" element={<AdminTasks />} />
         <Route path="bookings" element={<AdminBookings />} />
         <Route path="bookings/:id" element={<AdminBookingDetail />} />
         <Route path="calendar" element={<AdminCalendar />} />

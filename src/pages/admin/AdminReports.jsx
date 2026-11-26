@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { format, startOfMonth } from 'date-fns'
+import { format, startOfMonth, isPast, isToday } from 'date-fns'
 import { BOOKING_STATUSES, statusById, fmtINR, packageById } from '@/data/mock'
 import StatCard from '@/components/StatCard'
 import { IndianRupee, CalendarCheck, Trophy, FileClock, Wallet, Truck } from 'lucide-react'
@@ -49,6 +49,21 @@ export default function AdminReports() {
     (s, b) => s + Math.max((b.amount ?? 0) - b.receipts.reduce((r, x) => r + x.amount, 0), 0), 0
   )
   const vendorOutstanding = vendors.reduce((s, v) => s + v.balance, 0)
+
+  const bySource = useMemo(() => {
+    const map = new Map()
+    bookings.forEach((b) => map.set(b.source ?? 'Website / QR', (map.get(b.source ?? 'Website / QR') ?? 0) + 1))
+    return [...map.entries()].sort((a, b) => b[1] - a[1])
+  }, [bookings])
+  const maxSource = Math.max(...bySource.map(([, v]) => v), 1)
+
+  const taskStats = useMemo(() => {
+    const all = bookings.flatMap((b) => b.tasks ?? [])
+    const done = all.filter((t) => t.status === 'done')
+    const overdue = all.filter((t) => t.status !== 'done' && isPast(new Date(t.due)) && !isToday(new Date(t.due)))
+    const blocked = all.filter((t) => t.status === 'blocked')
+    return { total: all.length, done: done.length, overdue: overdue.length, blocked: blocked.length }
+  }, [bookings])
 
   const Section = ({ title, children }) => (
     <section className="bg-white rounded-xl border border-stone-200 p-5">
@@ -108,6 +123,23 @@ export default function AdminReports() {
             {byDish.length ? byDish.map(([dish, count]) => (
               <Bar key={dish} label={dish} value={count} display={`${count}×`} color="bg-gold-500" max={maxDish} />
             )) : <p className="text-sm text-stone-400">Dishes appear here once menus are selected on events.</p>}
+          </div>
+        </Section>
+
+        <Section title="Lead pipeline by source">
+          <div className="space-y-3">
+            {bySource.length ? bySource.map(([src, count]) => (
+              <Bar key={src} label={src} value={count} display={count} max={maxSource} />
+            )) : <p className="text-sm text-stone-400">No leads yet.</p>}
+          </div>
+        </Section>
+
+        <Section title="Task performance">
+          <div className="space-y-3">
+            <Bar label="Done" value={taskStats.done} display={taskStats.done} max={Math.max(taskStats.total, 1)} />
+            <Bar label="Open" value={taskStats.total - taskStats.done - taskStats.overdue - taskStats.blocked} display={taskStats.total - taskStats.done - taskStats.overdue - taskStats.blocked} color="bg-sky-500" max={Math.max(taskStats.total, 1)} />
+            <Bar label="Overdue" value={taskStats.overdue} display={taskStats.overdue} color="bg-red-500" max={Math.max(taskStats.total, 1)} />
+            <Bar label="Blocked" value={taskStats.blocked} display={taskStats.blocked} color="bg-orange-400" max={Math.max(taskStats.total, 1)} />
           </div>
         </Section>
 

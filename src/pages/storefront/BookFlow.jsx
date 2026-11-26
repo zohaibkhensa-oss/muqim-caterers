@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, ArrowRight, CheckCircle2, CalendarDays, UtensilsCrossed, User, ClipboardCheck } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, CalendarDays, UtensilsCrossed, User, ClipboardCheck, Search } from 'lucide-react'
 import { addBooking } from '@/features/bookings/bookingsSlice'
 import { EVENT_TYPES, CATERING_TYPES, fmtINR } from '@/data/mock'
+import { ALL_DISHES } from '@/lib/procurement'
 
 const STEPS = [
   { id: 'event', label: 'Event', icon: CalendarDays },
@@ -26,9 +27,10 @@ export default function BookFlow() {
   const [done, setDone] = useState(null)
   const [form, setForm] = useState({
     eventType: '', cateringType: 'full', date: '', time: '', guests: 50, vegGuests: '', venue: '',
-    packageId: params.get('package') ?? '', customMenu: '',
+    packageId: params.get('package') ?? '', customMenu: '', dishes: [],
     name: '', phone: '', email: '', notes: '',
   })
+  const [dishQuery, setDishQuery] = useState('')
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e?.target ? e.target.value : e }))
 
   const pkg = packages.find((p) => p.id === form.packageId)
@@ -57,8 +59,10 @@ export default function BookFlow() {
       venue: form.venue.trim(),
       packageId: form.packageId || null,
       amount: estimate,
+      menuItems: form.dishes.map((d) => ({ dish: d.dish, group: d.group, requested: true })),
       notes: [
         ...(form.customMenu.trim() ? [`Custom menu request: ${form.customMenu.trim()}`] : []),
+        ...(form.dishes.length ? [`Customer picked ${form.dishes.length} dishes — requests, not yet approved`] : []),
         ...(form.notes.trim() ? [form.notes.trim()] : []),
       ],
     }
@@ -236,6 +240,47 @@ export default function BookFlow() {
                   className={input}
                 />
               </div>
+              <div>
+                <label className={label}>Pick specific dishes (optional — requests, we confirm the final menu)</label>
+                <div className="rounded-xl border border-cream-200 p-3">
+                  <div className="relative mb-2">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                    <input
+                      value={dishQuery} onChange={(e) => setDishQuery(e.target.value)}
+                      placeholder="Search the full menu — e.g. galouti, biryani, phirni…"
+                      className="w-full rounded-lg border border-cream-200 pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-400"
+                    />
+                  </div>
+                  {form.dishes.length > 0 && (
+                    <p className="text-xs text-teal-800 bg-teal-50 rounded-lg px-3 py-2 mb-2">
+                      {form.dishes.length} dish{form.dishes.length > 1 ? 'es' : ''} selected
+                    </p>
+                  )}
+                  <div className="max-h-56 overflow-y-auto flex flex-wrap gap-1.5">
+                    {ALL_DISHES
+                      .filter((d) => !dishQuery || d.dish.toLowerCase().includes(dishQuery.toLowerCase()))
+                      .slice(0, 120)
+                      .map((d) => {
+                        const on = form.dishes.some((x) => x.dish === d.dish)
+                        return (
+                          <button
+                            key={d.dish}
+                            type="button"
+                            onClick={() => setForm((f) => ({
+                              ...f,
+                              dishes: on ? f.dishes.filter((x) => x.dish !== d.dish) : [...f.dishes, d],
+                            }))}
+                            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                              on ? 'bg-teal-700 text-cream-50' : 'bg-cream-100 text-stone-600 hover:bg-teal-50 hover:text-teal-800'
+                            }`}
+                          >
+                            {d.dish}
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+              </div>
               {estimate != null && (
                 <p className="text-sm bg-gold-300/30 border border-gold-400/40 rounded-xl px-4 py-3 text-teal-900">
                   Rough estimate for {form.guests} guests: <strong>{fmtINR(estimate)}</strong> (final quote may vary)
@@ -277,7 +322,7 @@ export default function BookFlow() {
                   ['Date', `${form.date}${form.time ? ` · ${form.time}` : ''}`],
                   ['Guests', `${form.guests}${form.vegGuests ? ` (${form.vegGuests} veg · ${Math.max(Number(form.guests) - Number(form.vegGuests), 0)} non-veg)` : ''}`],
                   ['Venue', form.venue],
-                  ['Menu', pkg ? pkg.name : 'Custom request'],
+                  ['Menu', `${pkg ? pkg.name : 'Custom request'}${form.dishes.length ? ` · ${form.dishes.length} dishes picked` : ''}`],
                   ['Contact', `${form.name} · ${form.phone}`],
                 ].map(([k, v]) => (
                   <div key={k}>

@@ -260,13 +260,13 @@ export const LOGISTICS_CHECKLIST = {
 }
 
 export const STAFF = [
-  { id: 'st-1', name: 'Imran Sheikh', role: 'Head Chef', phone: '+91 80042 11223' },
-  { id: 'st-2', name: 'Rafiq Ansari', role: 'Chef — Biryani', phone: '+91 80042 44556' },
-  { id: 'st-3', name: 'Salman Qureshi', role: 'Chef — Kebabs', phone: '+91 80042 77889' },
-  { id: 'st-4', name: 'Ayesha Khan', role: 'Event Coordinator', phone: '+91 78007 33445' },
-  { id: 'st-5', name: 'Bilal Ahmed', role: 'Service Lead', phone: '+91 78007 66778' },
-  { id: 'st-6', name: 'Farhan Malik', role: 'Service Staff', phone: '+91 78007 99001' },
-  { id: 'st-7', name: 'Naved Ali', role: 'Driver / Logistics', phone: '+91 78007 22334' },
+  { id: 'st-1', name: 'Imran Sheikh', role: 'Head Chef', phone: '+91 80042 11223', permRole: 'chef' },
+  { id: 'st-2', name: 'Rafiq Ansari', role: 'Chef — Biryani', phone: '+91 80042 44556', permRole: 'chef' },
+  { id: 'st-3', name: 'Salman Qureshi', role: 'Chef — Kebabs', phone: '+91 80042 77889', permRole: 'chef' },
+  { id: 'st-4', name: 'Ayesha Khan', role: 'Event Coordinator', phone: '+91 78007 33445', permRole: 'coordinator' },
+  { id: 'st-5', name: 'Bilal Ahmed', role: 'Service Lead', phone: '+91 78007 66778', permRole: 'service' },
+  { id: 'st-6', name: 'Farhan Malik', role: 'Service Staff', phone: '+91 78007 99001', permRole: 'service' },
+  { id: 'st-7', name: 'Naved Ali', role: 'Driver / Logistics', phone: '+91 78007 22334', permRole: 'service' },
 ]
 
 const today = new Date()

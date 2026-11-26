@@ -11,7 +11,7 @@ import {
 } from '@/lib/procurement'
 import { scanMenuImage, ocrEnabled } from '@/lib/ocr'
 import {
-  addMenuItem, removeMenuItem, setMenuItemGroup,
+  addMenuItem, removeMenuItem, setMenuItemGroup, approveMenu,
   setProcurement, setProcurementVendor, setProcurementStatus, toggleLogisticItem,
 } from '@/features/bookings/bookingsSlice'
 
@@ -179,8 +179,21 @@ function EventMenu({ booking }) {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h3 className="font-semibold text-teal-900 flex items-center gap-2">
           <ChefHat size={17} /> Event menu — segregated by prep group
+          {booking.menuApproved && (
+            <span className="rounded-full bg-teal-100 text-teal-700 px-2 py-0.5 text-[10px] font-bold">
+              approved v{booking.menuVersions?.length ?? 0}
+            </span>
+          )}
         </h3>
         <div className="flex gap-2">
+          <button
+            onClick={() => dispatch(approveMenu({ id: booking.id }))}
+            disabled={!menu.length || booking.menuApproved}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-600 hover:border-teal-400 disabled:opacity-40"
+            title="Snapshot this menu as an approved version"
+          >
+            <CheckCircle2 size={13} /> Approve menu
+          </button>
           <button onClick={() => setImporter(true)} className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-600 hover:border-teal-400">
             <Upload size={13} /> Import menu
           </button>
@@ -215,7 +228,10 @@ function EventMenu({ booking }) {
                     >
                       {PREP_GROUPS.map((pg) => <option key={pg.id} value={pg.id}>{pg.label}</option>)}
                     </select>
-                    <span className="flex-1 min-w-0 truncate text-stone-700">{m.dish}</span>
+                    <span className="flex-1 min-w-0 truncate text-stone-700">
+                      {m.dish}
+                      {m.requested && <span className="ml-1.5 rounded-full bg-amber-100 text-amber-700 px-1.5 py-0.5 text-[9px] font-bold uppercase align-middle">customer pick</span>}
+                    </span>
                     <button onClick={() => dispatch(removeMenuItem({ id: booking.id, dish: m.dish }))} className="text-stone-300 hover:text-red-500">
                       <Trash2 size={14} />
                     </button>

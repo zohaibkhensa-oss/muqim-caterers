@@ -25,6 +25,11 @@ export default function AdminStaff() {
               <div>
                 <p className="font-semibold">{s.name}</p>
                 <p className="text-xs text-stone-500">{s.role}</p>
+                {s.permRole && (
+                  <span className="inline-block mt-1 rounded-full bg-teal-100 text-teal-700 px-2 py-0.5 text-[10px] font-bold uppercase">
+                    {s.permRole}
+                  </span>
+                )}
               </div>
             </div>
             <p className="flex items-center gap-2 text-sm text-stone-600 mb-4">
