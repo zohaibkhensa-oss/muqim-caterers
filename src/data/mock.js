@@ -91,25 +91,6 @@ export const PACKAGES = [
       'Fresh fruit', 'Paan', '3 types of salad', 'LED counters', 'Service staff', 'Crockery',
     ],
   },
-  {
-    id: 'pkg-speciality',
-    name: 'Zafraan Speciality',
-    badge: 'Signature',
-    tier: 4,
-    tagline: 'Our signature line — raan, musallam, haleem and khichda prepared the Zafraan way',
-    category: 'Speciality',
-    pricePerHead: 1600,
-    minGuests: 250,
-    servesNote: 'Made to order · discuss the spread with our head chef',
-    gradient: 'from-stone-900 via-stone-800 to-gold-400',
-    tags: ['Signature dishes', 'Chef-curated', 'LED counters'],
-    items: [
-      'Zafraan signature starters', '7 veg starters', 'Welcome drink', '3 mutton dishes',
-      '4 chicken dishes', 'Signature mains (raan / musallam / haleem)', '3 sweet dishes',
-      '2 desserts', 'Cafeteria', 'Fresh fruit', 'Paan', '3 types of salad',
-      'LED counters', 'Service staff', 'Crockery',
-    ],
-  },
 ]
 
 export const packageById = (id) => PACKAGES.find((p) => p.id === id)
@@ -517,20 +498,6 @@ export const PACKAGE_PICKS = {
     { label: 'Dal & Tawa', sections: ['Dal & Tawa'], count: 2 },
     { label: 'Breads', sections: ['Roti ki Tokri'], count: 3 },
     { label: 'Desserts', sections: ['Desserts'], count: 3 },
-    { label: 'After Dinner / Drinks', sections: ['After Dinner'], count: 2 },
-  ],
-  'pkg-speciality': [
-    { label: 'Zafraan Signature', sections: ['Zafraan Signature'], count: 3 },
-    { label: 'Non-Veg Starters', sections: ['Non-Veg Starters'], count: 5 },
-    { label: 'Veg Starters', sections: ['Veg Starters & Snacks'], count: 5 },
-    { label: 'Mutton Dishes', sections: ['Mutton — Main Course'], count: 2 },
-    { label: 'Chicken Dishes', sections: ['Chicken — Main Course'], count: 2 },
-    { label: 'Fish & Prawns', sections: ['Fish & Prawns'], count: 1 },
-    { label: 'Biryani & Rice', sections: ['Biryani & Rice'], count: 2 },
-    { label: 'Veg Mains', sections: ['Vegetarian — Main Course'], count: 5 },
-    { label: 'Dal & Tawa', sections: ['Dal & Tawa'], count: 2 },
-    { label: 'Breads', sections: ['Roti ki Tokri'], count: 4 },
-    { label: 'Desserts', sections: ['Desserts'], count: 4 },
     { label: 'After Dinner / Drinks', sections: ['After Dinner'], count: 2 },
   ],
 }

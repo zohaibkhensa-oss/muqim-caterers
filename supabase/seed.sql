@@ -10,10 +10,7 @@ insert into packages (id, name, badge, tier, tagline, category, price_per_head, 
  '["3 non-veg starters","6 veg starters","1 welcome drink","2 mutton dishes","3 chicken dishes","2 sweet dishes","2 desserts","Cafeteria","Salad","2 bottled water","Jaar water","Service staff","Crockery","LED counters"]'),
 ('pkg-vip', 'VIP Package', 'Premium', 3, 'The full experience — fruit, paan and three salad varieties', 'Full Catering', 1250, 200, 'Best for 200–1000 guests', 'from-stone-800 via-teal-800 to-gold-400',
  '["Premium buffet","Fruit & paan","LED counters","Welcome drink"]',
- '["3 non-veg starters","7 veg starters","Welcome drink","3 mutton dishes","4 chicken dishes","3 sweet dishes","2 desserts","Cafeteria","Fresh fruit","Paan","3 types of salad","LED counters","Service staff","Crockery"]'),
-('pkg-speciality', 'Zafraan Speciality', 'Signature', 4, 'Our signature line — raan, musallam, haleem and khichda prepared the Zafraan way', 'Speciality', 1600, 250, 'Made to order · discuss the spread with our head chef', 'from-stone-900 via-stone-800 to-gold-400',
- '["Signature dishes","Chef-curated","LED counters"]',
- '["Zafraan signature starters","7 veg starters","Welcome drink","3 mutton dishes","4 chicken dishes","Signature mains (raan / musallam / haleem)","3 sweet dishes","2 desserts","Cafeteria","Fresh fruit","Paan","3 types of salad","LED counters","Service staff","Crockery"]')
+ '["3 non-veg starters","7 veg starters","Welcome drink","3 mutton dishes","4 chicken dishes","3 sweet dishes","2 desserts","Cafeteria","Fresh fruit","Paan","3 types of salad","LED counters","Service staff","Crockery"]')
 on conflict (id) do nothing;
 
 insert into vendors (id, name, category, sub, phone, items, balance) values
