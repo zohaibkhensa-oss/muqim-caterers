@@ -10,6 +10,23 @@ import { useT } from '@/lib/i18n'
 const input = 'w-full rounded-lg border border-cream-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-400'
 const label = 'block text-[11px] font-semibold text-stone-500 uppercase tracking-wide mb-1'
 
+// Custom-menu builder — right-panel categories mapped to dish groups (sketch layout).
+const CUSTOM_CATEGORIES = [
+  { label: 'Welcome Drinks', custom: ['Jaljeera', 'Nimbu Shikanjvi', 'Aam Panna', 'Cold Drink', 'Mocktail', 'Masala Chaas', 'Tea / Coffee'] },
+  { label: 'Veg Starters', sections: ['Veg Starters & Snacks'] },
+  { label: 'Non Veg Starters', sections: ['Non-Veg Starters', 'Zafraan Signature'] },
+  { label: 'Non Veg Main Course', sections: ['Mutton — Main Course', 'Chicken — Main Course', 'Fish & Prawns', 'Shorba', 'Biryani & Rice'] },
+  { label: 'Veg Main Course', sections: ['Vegetarian — Main Course', 'Dal & Tawa', 'Soups'] },
+  { label: 'Roti ki Tokri', sections: ['Roti ki Tokri'] },
+  { label: 'Desserts', sections: ['Desserts', 'After Dinner'] },
+  { label: 'Counters', custom: ['Live Chaat Counter', 'Fruit Counter', 'Paan Counter', 'Mocktail Counter', 'Dessert Counter', 'Salad Bar', 'LED Counters', 'Welcome Drink Counter'] },
+]
+
+const groupsForCategory = (cat) =>
+  cat.custom
+    ? [{ title: cat.label, items: cat.custom.map((dish) => ({ dish, section: cat.label, group: 'specialSupplier' })) }]
+    : cat.sections.map((sec) => ({ title: sec, items: ALL_DISHES.filter((d) => d.section === sec) }))
+
 // Auto-cycling slide card — swap `slides` for real photo URLs later.
 function SlideShow({ title, slides }) {
   const [i, setI] = useState(0)
