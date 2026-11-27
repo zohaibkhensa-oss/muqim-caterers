@@ -211,10 +211,12 @@ export default function BookFlow() {
   return (
     <div className="max-w-[1400px] mx-auto px-3 md:px-6 py-6 md:py-8">
       {/* ── Top strip: slideshows flanking the logo ── */}
-      <div className="flex items-stretch gap-3 mb-6">
-        <SlideShow title={t('Catering photos')} slides={slideshowA} />
-        <img src="/logo.jpeg" alt="Muqim Caterer's" className="h-36 md:h-44 w-auto rounded-2xl bg-white object-contain shrink-0 shadow-sm" />
-        <SlideShow title={t('Counter photos')} slides={slideshowB} />
+      <div className="flex flex-col sm:flex-row items-stretch gap-3 mb-6">
+        <img src="/logo.jpeg" alt="Muqim Caterer's" className="h-32 md:h-44 w-auto mx-auto rounded-2xl bg-white object-contain shrink-0 shadow-sm sm:order-none order-first" />
+        <div className="flex gap-3 flex-1 min-w-0">
+          <SlideShow title={t('Catering photos')} slides={slideshowA} />
+          <SlideShow title={t('Counter photos')} slides={slideshowB} />
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-5 items-start">

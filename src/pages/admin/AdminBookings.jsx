@@ -118,8 +118,8 @@ export default function AdminBookings() {
           </DragOverlay>
         </DndContext>
       ) : (
-        <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white rounded-xl border border-stone-200 overflow-hidden overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="text-left text-xs text-stone-400 uppercase tracking-wide border-b border-stone-100">
                 <th className="px-5 py-3">Ref</th>

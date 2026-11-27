@@ -74,7 +74,7 @@ export default function AdminBookingDetail() {
         </div>
       </div>
 
-      <div className="flex gap-1 mb-6 bg-white rounded-xl border border-stone-200 p-1 w-fit">
+      <div className="flex gap-1 mb-6 bg-white rounded-xl border border-stone-200 p-1 w-fit max-w-full overflow-x-auto">
         {[
           { id: 'overview', label: 'Overview' },
           { id: 'operations', label: `Operations${(booking.menuItems ?? []).length ? ` · ${booking.menuItems.length} dishes` : ''}` },
@@ -83,7 +83,7 @@ export default function AdminBookingDetail() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+            className={`rounded-lg px-5 py-2 text-sm font-semibold whitespace-nowrap transition-colors ${
               tab === t.id ? 'bg-teal-700 text-cream-50' : 'text-stone-500 hover:text-teal-700'
             }`}
           >

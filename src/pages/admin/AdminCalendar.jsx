@@ -30,6 +30,8 @@ export default function AdminCalendar() {
         </div>
       </header>
 
+      <div className="overflow-x-auto">
+      <div className="min-w-[640px]">
       <div className="grid grid-cols-7 text-xs font-semibold text-stone-400 uppercase tracking-wide border-b border-stone-100">
         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
           <div key={d} className="px-3 py-2.5">{d}</div>
@@ -71,6 +73,8 @@ export default function AdminCalendar() {
             </div>
           )
         })}
+      </div>
+      </div>
       </div>
     </div>
   )
