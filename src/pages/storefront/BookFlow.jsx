@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useSearchParams } from 'react-router-dom'
-import { CheckCircle2, ChevronDown, Search } from 'lucide-react'
+import { CheckCircle2, ChevronDown } from 'lucide-react'
 import { addBooking } from '@/features/bookings/bookingsSlice'
 import { EVENT_TYPES, fmtINR, PACKAGE_PICKS, CONTACT } from '@/data/mock'
 import { ALL_DISHES, waLink } from '@/lib/procurement'
@@ -121,7 +121,7 @@ export default function BookFlow() {
 
   const [done, setDone] = useState(null)
   const [customMode, setCustomMode] = useState(false)
-  const [dishQuery, setDishQuery] = useState('')
+  const [activeCat, setActiveCat] = useState(3)
   const [form, setForm] = useState({
     name: '', phone: '', date: '', guests: 50, vegGuests: '', venue: '',
     eventType: 'Wedding', cateringType: 'full',
@@ -205,7 +205,11 @@ export default function BookFlow() {
   }
 
   const pickLabels = pkg ? (PACKAGE_PICKS[pkg.id] ?? []) : []
-  const grouped = pickLabels.map((p) => ({ label: p.label, items: form.dishes.filter((d) => p.sections.includes(d.section)) })).filter((g) => g.items.length)
+  const groupDefs = pkg ? pickLabels : CUSTOM_CATEGORIES
+  const grouped = groupDefs.map((p) => ({
+    label: p.label,
+    items: form.dishes.filter((d) => d.section === p.label || p.sections?.includes(d.section)),
+  })).filter((g) => g.items.length)
   const ungrouped = form.dishes.filter((d) => !grouped.some((g) => g.items.includes(d)))
 
   return (
@@ -335,49 +339,77 @@ export default function BookFlow() {
           </button>
 
           {customMode && (
-            <div className="mt-4 bg-white rounded-2xl border border-cream-200 p-4 md:p-5 space-y-4">
-              <div>
-                <label className={label}>{t('Or describe your own menu / requirements')}</label>
-                <textarea
-                  value={form.customMenu}
-                  onChange={(e) => setForm({ ...form, customMenu: e.target.value })}
-                  rows={3}
-                  placeholder={t('e.g. Vegetarian only, live chaat counter, Jain options for 20 guests…')}
-                  className={input}
-                />
-              </div>
-              <div>
-                <label className={label}>{t('Pick specific dishes (optional — requests, we confirm the final menu)')}</label>
-                <div className="rounded-xl border border-cream-200 p-3">
-                  <div className="relative mb-2">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
-                    <input
-                      value={dishQuery} onChange={(e) => setDishQuery(e.target.value)}
-                      placeholder={t('Search the full menu — e.g. galouti, biryani, phirni…')}
-                      className="w-full rounded-lg border border-cream-200 pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-400"
-                    />
-                  </div>
-                  <div className="max-h-52 overflow-y-auto flex flex-wrap gap-1.5">
-                    {ALL_DISHES
-                      .filter((d) => !dishQuery || d.dish.toLowerCase().includes(dishQuery.toLowerCase()))
-                      .slice(0, 120)
-                      .map((d) => {
+            <div className="mt-4 flex flex-col xl:flex-row gap-4 items-start">
+              {/* Center — dish checklist for the active category */}
+              <div className="flex-1 min-w-0 w-full bg-white rounded-2xl border border-cream-200 p-4 md:p-5">
+                <h3 className="font-display text-xl font-semibold text-red-600 text-center uppercase tracking-wide">
+                  {t(CUSTOM_CATEGORIES[activeCat].label)}
+                </h3>
+                <p className="text-[11px] text-stone-400 text-center mb-4">
+                  {t('Tick the items as selection — they appear in the preview on the left')}
+                </p>
+                <div className="columns-1 sm:columns-2 2xl:columns-3 gap-x-6">
+                  {groupsForCategory(CUSTOM_CATEGORIES[activeCat]).map((g) => (
+                    <div key={g.title} className="break-inside-avoid mb-5">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-teal-700 border-b border-teal-100 pb-1 mb-1.5">
+                        {t(g.title)}
+                      </p>
+                      {g.items.map((d) => {
                         const on = form.dishes.some((x) => x.dish === d.dish)
                         return (
                           <button
                             key={d.dish} type="button" onClick={() => toggleDish(d)}
-                            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                              on ? 'bg-teal-700 text-cream-50' : 'bg-cream-100 text-stone-600 hover:bg-teal-50 hover:text-teal-800'
+                            className={`w-full flex items-center gap-2 rounded px-1.5 py-1 text-left text-[13px] transition-colors ${
+                              on ? 'text-teal-800 font-semibold bg-teal-50' : 'text-stone-600 hover:bg-cream-50'
                             }`}
                           >
-                            {d.dish}
+                            <span className={`w-3.5 h-3.5 rounded-sm border grid place-items-center text-[9px] shrink-0 ${on ? 'bg-teal-600 border-teal-600 text-white' : 'border-stone-300 bg-white'}`}>
+                              {on ? '✓' : ''}
+                            </span>
+                            • {d.dish}
                           </button>
                         )
                       })}
-                  </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 border-t border-cream-200 pt-4">
+                  <label className={label}>{t('Or describe your own menu / requirements')}</label>
+                  <textarea
+                    value={form.customMenu}
+                    onChange={(e) => setForm({ ...form, customMenu: e.target.value })}
+                    rows={2}
+                    placeholder={t('e.g. Vegetarian only, live chaat counter, Jain options for 20 guests…')}
+                    className={input}
+                  />
+                </div>
+              </div>
+
+              {/* Right — Customize category list */}
+              <div className="w-full xl:w-52 shrink-0 bg-white rounded-2xl border border-cream-200 p-4 h-fit xl:sticky xl:top-24">
+                <h3 className="font-display text-lg font-semibold text-red-600 text-center">{t('Customize')}</h3>
+                <p className="text-[11px] text-stone-400 text-center mb-3">{t('Select elements to choose dishes')}</p>
+                <div className="flex xl:flex-col gap-1 overflow-x-auto">
+                  {CUSTOM_CATEGORIES.map((c, i) => (
+                    <button
+                      key={c.label}
+                      onClick={() => setActiveCat(i)}
+                      className={`text-left rounded-lg px-3 py-2 text-sm whitespace-nowrap transition-colors ${
+                        activeCat === i ? 'font-bold text-teal-900 bg-teal-50' : 'text-stone-500 hover:bg-cream-50'
+                      }`}
+                    >
+                      {t(c.label)}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
+          )}
+
+          {customMode && (
+            <p className="mt-4 rounded-xl bg-red-600 text-white text-center font-semibold text-sm md:text-base py-3.5 px-4">
+              {t('Our team will connect to you for exact quotation — or call on')} {CONTACT.phones[1]}
+            </p>
           )}
         </div>
       </div>
