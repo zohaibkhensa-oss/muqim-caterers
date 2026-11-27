@@ -55,6 +55,19 @@ export function generateProcurement(booking) {
   const specials = byGroup('specialSupplier')
 
   return [
+    // Dish-level vendor orders — actual menu items routed to the supplying vendor.
+    ...(starters.length ? [{
+      id: 'starter-order',
+      label: 'Starter Order — vendor',
+      category: 'Starter Vendor',
+      items: starters.map((m) => ({ label: m.dish, qty: pcs(g) })),
+    }] : []),
+    ...(specials.length ? [{
+      id: 'special-order',
+      label: 'Special Supplier Order',
+      category: 'Special Supplier',
+      items: specials.map((m) => ({ label: m.dish, qty: pcs(g) })),
+    }] : []),
     {
       id: 'nonveg',
       label: 'Non-Veg Material',
@@ -165,6 +178,7 @@ export function procurementMessage(booking, group) {
     `*Muqim Caterer's — ${booking.ref}*`,
     `*${group.label}*`,
     `Event: ${booking.eventType} · ${new Date(booking.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · ${booking.guests} pax`,
+    `Venue: ${booking.venue}`,
     '',
     ...group.items.map((i) => `• ${i.label} — ${i.qty}`),
     '',

@@ -170,9 +170,23 @@ function MenuImport({ booking, onClose }) {
 
 function EventMenu({ booking }) {
   const dispatch = useDispatch()
+  const vendors = useSelector((s) => s.vendors.list)
   const [picker, setPicker] = useState(false)
   const [importer, setImporter] = useState(false)
   const menu = booking.menuItems ?? []
+
+  // approve menu → auto-route dishes to vendor lists (blueprint §13 automation)
+  const approveAndGenerate = () => {
+    dispatch(approveMenu({ id: booking.id }))
+    if (!booking.procurement) {
+      const groups = generateProcurement(booking).map((g) => ({
+        ...g,
+        vendorId: vendors.find((v) => v.category === g.category)?.id ?? '',
+        status: 'pending',
+      }))
+      dispatch(setProcurement({ id: booking.id, groups }))
+    }
+  }
 
   return (
     <section className={card}>
@@ -187,7 +201,7 @@ function EventMenu({ booking }) {
         </h3>
         <div className="flex gap-2">
           <button
-            onClick={() => dispatch(approveMenu({ id: booking.id }))}
+            onClick={approveAndGenerate}
             disabled={!menu.length || booking.menuApproved}
             className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-600 hover:border-teal-400 disabled:opacity-40"
             title="Snapshot this menu as an approved version"
@@ -261,13 +275,24 @@ function Procurement({ booking }) {
   const lists = booking.procurement
 
   const generate = () => {
+    // regenerate is idempotent — keep existing vendor assignment + dispatch status per list
+    const prev = Object.fromEntries((lists ?? []).map((g) => [g.id, g]))
     const groups = generateProcurement(booking).map((g) => ({
       ...g,
-      vendorId: vendors.find((v) => v.category === g.category)?.id ?? '',
-      status: 'pending',
+      vendorId: prev[g.id]?.vendorId ?? vendors.find((v) => v.category === g.category)?.id ?? '',
+      status: prev[g.id]?.status ?? 'pending',
     }))
     dispatch(setProcurement({ id: booking.id, groups }))
   }
+
+  const dispatchAll = () => {
+    const next = (lists ?? []).find((g) => g.vendorId && g.status === 'pending')
+    if (!next) return
+    const vendor = vendors.find((v) => v.id === next.vendorId)
+    if (vendor) window.open(waLink(vendor.phone, procurementMessage(booking, next)), '_blank')
+    dispatch(setProcurementStatus({ id: booking.id, groupId: next.id, status: 'sent' }))
+  }
+  const pendingCount = (lists ?? []).filter((g) => g.status === 'pending' && g.vendorId).length
 
   return (
     <section className={card}>
@@ -275,12 +300,22 @@ function Procurement({ booking }) {
         <h3 className="font-semibold text-teal-900 flex items-center gap-2">
           <ClipboardList size={17} /> Procurement lists
         </h3>
-        <button
-          onClick={generate}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 text-cream-50 px-3 py-1.5 text-xs font-semibold hover:bg-teal-600"
-        >
-          <RefreshCw size={13} /> {lists ? 'Regenerate from menu + PAX' : 'Generate from menu + PAX'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={generate}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 text-cream-50 px-3 py-1.5 text-xs font-semibold hover:bg-teal-600"
+          >
+            <RefreshCw size={13} /> {lists ? 'Regenerate from menu + PAX' : 'Generate from menu + PAX'}
+          </button>
+          {pendingCount > 0 && (
+            <button
+              onClick={dispatchAll}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] text-white px-3 py-1.5 text-xs font-bold hover:brightness-95"
+            >
+              <Send size={12} /> Dispatch next ({pendingCount})
+            </button>
+          )}
+        </div>
       </div>
 
       {!lists ? (

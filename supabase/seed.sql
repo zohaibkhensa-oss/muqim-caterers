@@ -26,7 +26,8 @@ insert into vendors (id, name, category, phone, items, balance) values
 ('vn-7', 'Packwell Disposables', 'Disposables', '+91 94150 77777', 'Plates, cups, boxes, cutlery', 0),
 ('vn-8', 'Sharma Crockery Hire', 'Crockery', '+91 94150 88888', 'Bone china, steel, chafing dishes', 5600),
 ('vn-9', 'City Tempo Service', 'Transport', '+91 94150 99999', 'Loading, unloading, event transport', 0),
-('vn-10', 'Imam Kirana & General Store', 'Grocery', '+91 94150 10101', 'Dor rashan — rice, atta, oil, spices', 2100)
+('vn-10', 'Imam Kirana & General Store', 'Grocery', '+91 94150 10101', 'Dor rashan — rice, atta, oil, spices', 2100),
+('vn-11', 'Zafraan Speciality Suppliers', 'Special Supplier', '+91 94150 12121', 'Paan, after-dinner, speciality orders', 0)
 on conflict (id) do nothing;
 
 insert into staff (id, name, role, perm_role, phone) values

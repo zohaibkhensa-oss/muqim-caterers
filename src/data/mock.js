@@ -247,6 +247,7 @@ export const VENDORS = [
   { id: 'vn-8', name: 'Sharma Crockery Hire', category: 'Crockery', phone: '+91 94150 88888', items: 'Bone china, steel, chafing dishes', balance: 5600 },
   { id: 'vn-9', name: 'City Tempo Service', category: 'Transport', phone: '+91 94150 99999', items: 'Loading, unloading, event transport', balance: 0 },
   { id: 'vn-10', name: 'Imam Kirana & General Store', category: 'Grocery', phone: '+91 94150 10101', items: 'Dor rashan — rice, atta, oil, spices', balance: 2100 },
+  { id: 'vn-11', name: 'Zafraan Speciality Suppliers', category: 'Special Supplier', phone: '+91 94150 12121', items: 'Paan, after-dinner, speciality orders', balance: 0 },
 ]
 
 // Blueprint §7 — service & logistics checklist template (per event).
