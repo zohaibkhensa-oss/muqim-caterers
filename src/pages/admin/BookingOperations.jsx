@@ -7,7 +7,7 @@ import {
 import { LOGISTICS_CHECKLIST } from '@/data/mock'
 import {
   PREP_GROUPS, prepGroupById, groupForSection, ALL_DISHES,
-  generateProcurement, waLink, procurementMessage, MOCK_OCR_RESULT,
+  generateProcurement, vendorForGroup, waLink, procurementMessage, MOCK_OCR_RESULT,
 } from '@/lib/procurement'
 import { scanMenuImage, ocrEnabled } from '@/lib/ocr'
 import {
@@ -248,7 +248,7 @@ function EventMenu({ booking }) {
     if (!booking.procurement) {
       const groups = generateProcurement(booking).map((g) => ({
         ...g,
-        vendorId: vendors.find((v) => v.category === g.category)?.id ?? '',
+        vendorId: vendorForGroup(vendors, g)?.id ?? '',
         status: 'pending',
       }))
       dispatch(setProcurement({ id: booking.id, groups }))
@@ -346,7 +346,7 @@ function Procurement({ booking }) {
     const prev = Object.fromEntries((lists ?? []).map((g) => [g.id, g]))
     const groups = generateProcurement(booking).map((g) => ({
       ...g,
-      vendorId: prev[g.id]?.vendorId ?? vendors.find((v) => v.category === g.category)?.id ?? '',
+      vendorId: prev[g.id]?.vendorId ?? vendorForGroup(vendors, g)?.id ?? '',
       status: prev[g.id]?.status ?? 'pending',
     }))
     dispatch(setProcurement({ id: booking.id, groups }))

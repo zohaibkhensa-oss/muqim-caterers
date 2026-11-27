@@ -29,6 +29,20 @@ export const SECTION_TO_GROUP = {
 
 export const groupForSection = (section) => SECTION_TO_GROUP[section] ?? 'vegChef'
 
+// Route a dish to its protein shop — mutton, chicken, fish, or beef/keema.
+const proteinKey = (dish) => {
+  if (/beef|keema|kima|qeema|seekh/i.test(dish)) return 'beef'
+  if (/chicken|murgh|kukkad|tangdi/i.test(dish)) return 'chicken'
+  if (/fish|prawn|machli|jhinga/i.test(dish)) return 'fish'
+  return 'mutton'
+}
+const PROTEIN_LABEL = { mutton: 'Mutton', chicken: 'Chicken', fish: 'Fish/Prawn', beef: 'Beef/Keema' }
+
+// Vendor auto-assignment — prefer an exact category+sub match, else any vendor in the category.
+export const vendorForGroup = (vendors, group) =>
+  vendors.find((v) => v.category === group.category && group.vendorKey && v.sub === group.vendorKey)
+  ?? vendors.find((v) => v.category === group.category)
+
 // Flat dish index for pickers and import matching.
 export const ALL_DISHES = MENU_LIBRARY.flatMap((s) =>
   s.items.map((dish) => ({ dish, section: s.section, group: groupForSection(s.section) }))
@@ -68,18 +82,35 @@ export function generateProcurement(booking) {
       category: 'Special Supplier',
       items: specials.map((m) => ({ label: m.dish, qty: pcs(g) })),
     }] : []),
-    {
-      id: 'nonveg',
-      label: 'Non-Veg Material',
+    // Non-veg material split per protein — each shop gets only its own list.
+    ...['mutton', 'chicken', 'fish', 'beef']
+      .map((key) => {
+        const dishes = nonVegDishes.filter((m) => proteinKey(m.dish) === key)
+        if (!dishes.length) return null
+        return {
+          id: `nonveg-${key}`,
+          label: `Non-Veg Material — ${PROTEIN_LABEL[key]}`,
+          category: 'Non-Veg Material',
+          vendorKey: key,
+          items: dishes.map((m) => ({
+            label: `${m.dish} — raw material`,
+            qty: kg(Math.max(nvg, 10) * 0.12 / dishes.length),
+          })),
+        }
+      })
+      .filter(Boolean),
+    // Menu not finalised yet — one generic list so the owner still sees it.
+    ...(nonVegDishes.length ? [] : [{
+      id: 'nonveg-mutton',
+      label: 'Non-Veg Material — Mutton',
       category: 'Non-Veg Material',
+      vendorKey: 'mutton',
       items: [
-        ...nonVegDishes.map((m) => ({
-          label: `${m.dish} — raw material`,
-          qty: kg(Math.max(nvg, 10) * 0.12 / Math.max(nonVegDishes.length, 1)),
-        })),
+        { label: 'Mutton — bulk', qty: kg(Math.max(nvg, 10) * 0.06) },
+        { label: 'Chicken — bulk', qty: kg(Math.max(nvg, 10) * 0.06) },
         { label: 'Marinade & whole spices', qty: 'per menu' },
       ],
-    },
+    }]),
     {
       id: 'grocery',
       label: 'Dor Rashan / Grocery',
@@ -156,6 +187,15 @@ export function generateProcurement(booking) {
       ],
     },
     {
+      id: 'fuel',
+      label: 'Lakdi & Koyla',
+      category: 'Fuel',
+      items: [
+        { label: 'Lakdi (firewood)', qty: `${Math.ceil(g * 0.4)} kg` },
+        { label: 'Koyla (coal)', qty: `${Math.ceil(g * 0.15)} kg` },
+      ],
+    },
+    {
       id: 'disposables',
       label: 'Disposables',
       category: 'Disposables',
@@ -171,7 +211,10 @@ export function generateProcurement(booking) {
 }
 
 // Blueprint §6 — WhatsApp dispatch.
-export const waNumber = (phone) => (phone || '').replace(/\D/g, '')
+export const waNumber = (phone) => {
+  const d = (phone || '').replace(/\D/g, '')
+  return d.length === 10 ? `91${d}` : d
+}
 
 export function procurementMessage(booking, group) {
   const lines = [

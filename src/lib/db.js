@@ -101,6 +101,19 @@ export async function saveBooking(booking) {
   if (error) console.error('Supabase booking save failed:', error.message)
 }
 
+export async function saveVendor(vendor) {
+  if (!supabaseReady) return
+  const { id, name, category, sub, phone, items, balance } = vendor
+  const { error } = await supabase.from('vendors').upsert({ id, name, category, sub, phone, items, balance })
+  if (error) console.error('Supabase vendor save failed:', error.message)
+}
+
+export async function deleteVendor(id) {
+  if (!supabaseReady) return
+  const { error } = await supabase.from('vendors').delete().eq('id', id)
+  if (error) console.error('Supabase vendor delete failed:', error.message)
+}
+
 // Public status check — works without auth via the RPC.
 export async function lookupBookingByRef(ref) {
   if (!supabaseReady) return null

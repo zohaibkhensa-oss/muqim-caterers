@@ -232,22 +232,32 @@ export const MENU_LIBRARY = [
 
 // Vendor master (blueprint §6): supplier categories match the procurement split.
 export const VENDOR_CATEGORIES = [
-  'Vegetables', 'Grocery', 'Starter Vendor', 'Dairy', 'Non-Veg Material', 'Ice Cream',
-  'Drinks & Mocktails', 'Disposables', 'Crockery', 'Transport', 'Labour',
+  'Cook', 'Vegetables', 'Grocery', 'Starter Vendor', 'Dairy', 'Non-Veg Material',
+  'Ice Cream', 'Drinks & Mocktails', 'Disposables', 'Special Supplier', 'Fuel',
+  'Crockery', 'Transport', 'Labour',
 ]
 
+// Live routing sheet — real vendors from the ops workbook.
 export const VENDORS = [
-  { id: 'vn-1', name: 'Chowk Sabzi Suppliers', category: 'Vegetables', phone: '+91 94150 11111', items: 'Seasonal vegetables, salad produce', balance: 8500 },
-  { id: 'vn-2', name: 'Aminabad Kebab House', category: 'Starter Vendor', phone: '+91 94150 22222', items: 'Kebabs, tikkas — per-piece supply', balance: 0 },
-  { id: 'vn-3', name: 'Saras Dairy', category: 'Dairy', phone: '+91 94150 33333', items: 'Milk, cream, paneer, khoya', balance: 12200 },
-  { id: 'vn-4', name: 'Fresco Meat Co.', category: 'Non-Veg Material', phone: '+91 94150 44444', items: 'Mutton, chicken, fish — bulk', balance: 28000 },
-  { id: 'vn-5', name: 'Kwality Ice Cream', category: 'Ice Cream', phone: '+91 94150 55555', items: 'Kulfi, cassata, bulk tubs', balance: 0 },
-  { id: 'vn-6', name: 'Royal Beverages', category: 'Drinks & Mocktails', phone: '+91 94150 66666', items: 'Cold drinks, mocktail setup, soda', balance: 3400 },
-  { id: 'vn-7', name: 'Packwell Disposables', category: 'Disposables', phone: '+91 94150 77777', items: 'Plates, cups, boxes, cutlery', balance: 0 },
-  { id: 'vn-8', name: 'Sharma Crockery Hire', category: 'Crockery', phone: '+91 94150 88888', items: 'Bone china, steel, chafing dishes', balance: 5600 },
-  { id: 'vn-9', name: 'City Tempo Service', category: 'Transport', phone: '+91 94150 99999', items: 'Loading, unloading, event transport', balance: 0 },
-  { id: 'vn-10', name: 'Imam Kirana & General Store', category: 'Grocery', phone: '+91 94150 10101', items: 'Dor rashan — rice, atta, oil, spices', balance: 2100 },
-  { id: 'vn-11', name: 'Zafraan Speciality Suppliers', category: 'Special Supplier', phone: '+91 94150 12121', items: 'Paan, after-dinner, speciality orders', balance: 0 },
+  { id: 'vn-1', name: 'Imran — Barbeque Vendor', category: 'Starter Vendor', sub: 'barbeque', phone: '9793036973', items: 'Barbeque starters — kebabs, tikkas', balance: 0 },
+  { id: 'vn-2', name: 'Umrao Cook', category: 'Cook', sub: 'main', phone: '8127443820', items: 'Main cooking — non-veg mains', balance: 0 },
+  { id: 'vn-3', name: 'Vishal Cook', category: 'Cook', sub: 'veg', phone: '8303459494', items: 'Vegetarian cooking', balance: 0 },
+  { id: 'vn-4', name: 'Pandit', category: 'Vegetables', phone: '7317832014', items: 'Sabzi — all three veg packs', balance: 0 },
+  { id: 'vn-5', name: 'Aslam Mutton Shop', category: 'Non-Veg Material', sub: 'mutton', phone: '9793863654', items: 'Mutton — bulk', balance: 0 },
+  { id: 'vn-6', name: 'Hussain Chicken Shop', category: 'Non-Veg Material', sub: 'chicken', phone: '8869665417', items: 'Chicken — bulk', balance: 0 },
+  { id: 'vn-7', name: 'Sanjay Fish Shop', category: 'Non-Veg Material', sub: 'fish', phone: '8840492888', items: 'Fish, prawns', balance: 0 },
+  { id: 'vn-8', name: 'Meenu Bhai', category: 'Non-Veg Material', sub: 'beef', phone: '9335045999', items: 'Beef, keema', balance: 0 },
+  { id: 'vn-9', name: 'Mushtafa', category: 'Ice Cream', phone: '6382901588', items: 'Ice cream, kulfi, tubs', balance: 0 },
+  { id: 'vn-10', name: 'Ramesh Water Service', category: 'Drinks & Mocktails', sub: 'water', phone: '9621736786', items: 'Cold drinks, jar water', balance: 0 },
+  { id: 'vn-11', name: 'Siraj Bhai — Amul Agency', category: 'Dairy', sub: 'milk', phone: '7863248186', items: 'Milk & dairy — Amul agency', balance: 0 },
+  { id: 'vn-12', name: 'Raziya Phuppu', category: 'Fuel', phone: '9651853274', items: 'Lakdi & koyla — firewood and coal', balance: 0 },
+  { id: 'vn-13', name: 'Dairy Products Vendor', category: 'Dairy', sub: 'cream', phone: '7805793247', items: 'Cream, butter, cheese', balance: 0 },
+  { id: 'vn-14', name: 'Syrup & Beverage Vendor', category: 'Drinks & Mocktails', sub: 'syrup', phone: '7805783247', items: 'Coffee, chocolate syrup, mocktail syrup & crush', balance: 0 },
+  { id: 'vn-15', name: 'Nadeem', category: 'Disposables', phone: '7883899206', items: 'Plates, cups, packing', balance: 0 },
+  { id: 'vn-16', name: 'Nadeem — Counters', category: 'Special Supplier', phone: '7883899206', items: 'Pan counter, cafeteria, fruit counter', balance: 0 },
+  { id: 'vn-17', name: 'Shu Gupta Banya Store', category: 'Grocery', phone: '7267031850', items: 'Rashan — veg & non-veg', balance: 0 },
+  { id: 'vn-18', name: 'Sharma Crockery Hire', category: 'Crockery', phone: '9415088888', items: 'Bone china, steel, chafing dishes', balance: 0 },
+  { id: 'vn-19', name: 'City Tempo Service', category: 'Transport', phone: '9415099999', items: 'Loading, unloading, event transport', balance: 0 },
 ]
 
 // Blueprint §7 — service & logistics checklist template (per event).

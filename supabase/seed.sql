@@ -16,18 +16,26 @@ insert into packages (id, name, badge, tier, tagline, category, price_per_head, 
  '["Zafraan signature starters","7 veg starters","Welcome drink","3 mutton dishes","4 chicken dishes","Signature mains (raan / musallam / haleem)","3 sweet dishes","2 desserts","Cafeteria","Fresh fruit","Paan","3 types of salad","LED counters","Service staff","Crockery"]')
 on conflict (id) do nothing;
 
-insert into vendors (id, name, category, phone, items, balance) values
-('vn-1', 'Chowk Sabzi Suppliers', 'Vegetables', '+91 94150 11111', 'Seasonal vegetables, salad produce', 8500),
-('vn-2', 'Aminabad Kebab House', 'Starter Vendor', '+91 94150 22222', 'Kebabs, tikkas — per-piece supply', 0),
-('vn-3', 'Saras Dairy', 'Dairy', '+91 94150 33333', 'Milk, cream, paneer, khoya', 12200),
-('vn-4', 'Fresco Meat Co.', 'Non-Veg Material', '+91 94150 44444', 'Mutton, chicken, fish — bulk', 28000),
-('vn-5', 'Kwality Ice Cream', 'Ice Cream', '+91 94150 55555', 'Kulfi, cassata, bulk tubs', 0),
-('vn-6', 'Royal Beverages', 'Drinks & Mocktails', '+91 94150 66666', 'Cold drinks, mocktail setup, soda', 3400),
-('vn-7', 'Packwell Disposables', 'Disposables', '+91 94150 77777', 'Plates, cups, boxes, cutlery', 0),
-('vn-8', 'Sharma Crockery Hire', 'Crockery', '+91 94150 88888', 'Bone china, steel, chafing dishes', 5600),
-('vn-9', 'City Tempo Service', 'Transport', '+91 94150 99999', 'Loading, unloading, event transport', 0),
-('vn-10', 'Imam Kirana & General Store', 'Grocery', '+91 94150 10101', 'Dor rashan — rice, atta, oil, spices', 2100),
-('vn-11', 'Zafraan Speciality Suppliers', 'Special Supplier', '+91 94150 12121', 'Paan, after-dinner, speciality orders', 0)
+insert into vendors (id, name, category, sub, phone, items, balance) values
+('vn-1', 'Imran — Barbeque Vendor', 'Starter Vendor', 'barbeque', '9793036973', 'Barbeque starters — kebabs, tikkas', 0),
+('vn-2', 'Umrao Cook', 'Cook', 'main', '8127443820', 'Main cooking — non-veg mains', 0),
+('vn-3', 'Vishal Cook', 'Cook', 'veg', '8303459494', 'Vegetarian cooking', 0),
+('vn-4', 'Pandit', 'Vegetables', NULL, '7317832014', 'Sabzi — all three veg packs', 0),
+('vn-5', 'Aslam Mutton Shop', 'Non-Veg Material', 'mutton', '9793863654', 'Mutton — bulk', 0),
+('vn-6', 'Hussain Chicken Shop', 'Non-Veg Material', 'chicken', '8869665417', 'Chicken — bulk', 0),
+('vn-7', 'Sanjay Fish Shop', 'Non-Veg Material', 'fish', '8840492888', 'Fish, prawns', 0),
+('vn-8', 'Meenu Bhai', 'Non-Veg Material', 'beef', '9335045999', 'Beef, keema', 0),
+('vn-9', 'Mushtafa', 'Ice Cream', NULL, '6382901588', 'Ice cream, kulfi, tubs', 0),
+('vn-10', 'Ramesh Water Service', 'Drinks & Mocktails', 'water', '9621736786', 'Cold drinks, jar water', 0),
+('vn-11', 'Siraj Bhai — Amul Agency', 'Dairy', 'milk', '7863248186', 'Milk & dairy — Amul agency', 0),
+('vn-12', 'Raziya Phuppu', 'Fuel', NULL, '9651853274', 'Lakdi & koyla — firewood and coal', 0),
+('vn-13', 'Dairy Products Vendor', 'Dairy', 'cream', '7805793247', 'Cream, butter, cheese', 0),
+('vn-14', 'Syrup & Beverage Vendor', 'Drinks & Mocktails', 'syrup', '7805783247', 'Coffee, chocolate syrup, mocktail syrup & crush', 0),
+('vn-15', 'Nadeem', 'Disposables', NULL, '7883899206', 'Plates, cups, packing', 0),
+('vn-16', 'Nadeem — Counters', 'Special Supplier', NULL, '7883899206', 'Pan counter, cafeteria, fruit counter', 0),
+('vn-17', 'Shu Gupta Banya Store', 'Grocery', NULL, '7267031850', 'Rashan — veg & non-veg', 0),
+('vn-18', 'Sharma Crockery Hire', 'Crockery', NULL, '9415088888', 'Bone china, steel, chafing dishes', 0),
+('vn-19', 'City Tempo Service', 'Transport', NULL, '9415099999', 'Loading, unloading, event transport', 0)
 on conflict (id) do nothing;
 
 insert into staff (id, name, role, perm_role, phone) values

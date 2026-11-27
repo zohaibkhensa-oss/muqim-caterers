@@ -11,6 +11,13 @@ const vendorsSlice = createSlice({
     addVendor(state, action) {
       state.list.push({ id: `vn-${nanoid(6)}`, balance: 0, items: '', ...action.payload })
     },
+    updateVendor(state, action) {
+      const v = state.list.find((x) => x.id === action.payload.id)
+      if (v) Object.assign(v, action.payload)
+    },
+    removeVendor(state, action) {
+      state.list = state.list.filter((x) => x.id !== action.payload.id)
+    },
     adjustBalance(state, action) {
       const v = state.list.find((x) => x.id === action.payload.id)
       if (v) v.balance += action.payload.delta
@@ -18,5 +25,5 @@ const vendorsSlice = createSlice({
   },
 })
 
-export const { hydrate, addVendor, adjustBalance } = vendorsSlice.actions
+export const { hydrate, addVendor, updateVendor, removeVendor, adjustBalance } = vendorsSlice.actions
 export default vendorsSlice.reducer

@@ -36,10 +36,12 @@ create table if not exists vendors (
   id text primary key,
   name text not null,
   category text,
+  sub text,
   phone text,
   items text,
   balance int not null default 0
 );
+alter table vendors add column if not exists sub text;
 
 -- ─── Staff ──────────────────────────────────────────────────────────────────
 create table if not exists staff (
