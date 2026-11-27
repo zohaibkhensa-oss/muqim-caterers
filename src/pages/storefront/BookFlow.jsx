@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, ArrowRight, CheckCircle2, CalendarDays, UtensilsCrossed, User, ClipboardCheck, Search } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, CalendarDays, UtensilsCrossed, User, ClipboardCheck, Search, ChevronDown } from 'lucide-react'
 import { addBooking } from '@/features/bookings/bookingsSlice'
-import { EVENT_TYPES, CATERING_TYPES, fmtINR } from '@/data/mock'
+import { EVENT_TYPES, CATERING_TYPES, fmtINR, PACKAGE_PICKS, CONTACT } from '@/data/mock'
+import { waLink } from '@/lib/procurement'
 import { ALL_DISHES } from '@/lib/procurement'
 import { useT } from '@/lib/i18n'
 
@@ -17,6 +18,86 @@ const STEPS = [
 
 const input = 'w-full rounded-xl border border-cream-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-400'
 const label = 'block text-sm font-medium text-stone-600 mb-1.5'
+
+// One category row — collapsible dropdown, picks capped at pick.count.
+function PickDropdown({ pick, dishes, setForm, t }) {
+  const [open, setOpen] = useState(false)
+  const pool = ALL_DISHES.filter((d) => pick.sections.includes(d.section))
+  const picked = dishes.filter((d) => pick.sections.includes(d.section))
+  const full = picked.length >= pick.count
+
+  const toggle = (d) => {
+    const on = dishes.some((x) => x.dish === d.dish)
+    if (!on && full) return
+    setForm((f) => ({
+      ...f,
+      dishes: on ? f.dishes.filter((x) => x.dish !== d.dish) : [...f.dishes, d],
+    }))
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-cream-50"
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-semibold text-teal-900">{t(pick.label)}</span>
+          <span className={`text-[11px] font-bold rounded-full px-2 py-0.5 ${full ? 'bg-teal-700 text-cream-50' : 'bg-cream-100 text-stone-500'}`}>
+            {picked.length}/{pick.count}
+          </span>
+        </span>
+        <span className="flex items-center gap-2 min-w-0">
+          {picked.length > 0 && !open && (
+            <span className="hidden sm:block text-xs text-stone-400 truncate max-w-[220px]">
+              {picked.map((d) => d.dish).join(', ')}
+            </span>
+          )}
+          <ChevronDown size={15} className={`text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </span>
+      </button>
+      {open && (
+        <div className="px-4 pb-3">
+          {picked.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {picked.map((d) => (
+                <button
+                  key={d.dish} type="button" onClick={() => toggle(d)}
+                  className="rounded-full bg-teal-700 text-cream-50 px-2.5 py-1 text-[11px] font-medium"
+                >
+                  {d.dish} ✕
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="max-h-44 overflow-y-auto grid sm:grid-cols-2 gap-1">
+            {pool.map((d) => {
+              const on = dishes.some((x) => x.dish === d.dish)
+              const blocked = !on && full
+              return (
+                <button
+                  key={d.dish} type="button" disabled={blocked} onClick={() => toggle(d)}
+                  className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors ${
+                    on ? 'bg-teal-50 text-teal-800 ring-1 ring-teal-300'
+                    : blocked ? 'text-stone-300 cursor-not-allowed'
+                    : 'text-stone-600 hover:bg-cream-100'
+                  }`}
+                >
+                  <span className={`w-3.5 h-3.5 rounded border grid place-items-center text-[9px] shrink-0 ${on ? 'bg-teal-600 border-teal-600 text-white' : 'border-stone-300'}`}>
+                    {on ? '✓' : ''}
+                  </span>
+                  {d.dish}
+                </button>
+              )
+            })}
+          </div>
+          {full && <p className="text-[11px] text-teal-700 mt-2">{t('Category full — remove a dish to swap')}</p>}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function BookFlow() {
   const t = useT()
@@ -243,46 +324,70 @@ export default function BookFlow() {
                 />
               </div>
               <div>
-                <label className={label}>{t('Pick specific dishes (optional — requests, we confirm the final menu)')}</label>
-                <div className="rounded-xl border border-cream-200 p-3">
-                  <div className="relative mb-2">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
-                    <input
-                      value={dishQuery} onChange={(e) => setDishQuery(e.target.value)}
-                      placeholder={t('Search the full menu — e.g. galouti, biryani, phirni…')}
-                      className="w-full rounded-lg border border-cream-200 pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-400"
-                    />
+                <label className={label}>
+                  {pkg ? t('Build your menu — pick per category (requests, we confirm the final menu)') : t('Pick specific dishes (optional — requests, we confirm the final menu)')}
+                </label>
+                {pkg && PACKAGE_PICKS[pkg.id] ? (
+                  <div className="rounded-xl border border-cream-200 divide-y divide-cream-200 bg-white">
+                    {PACKAGE_PICKS[pkg.id].map((pick) => (
+                      <PickDropdown key={pick.label} pick={pick} dishes={form.dishes} setForm={setForm} t={t} />
+                    ))}
+                    {form.dishes.length > 0 && (
+                      <p className="text-xs text-teal-800 bg-teal-50 px-4 py-2.5">
+                        {form.dishes.length} {t('dishes selected')}
+                      </p>
+                    )}
                   </div>
-                  {form.dishes.length > 0 && (
-                    <p className="text-xs text-teal-800 bg-teal-50 rounded-lg px-3 py-2 mb-2">
-                      {form.dishes.length} {t('dishes selected')}
-                    </p>
-                  )}
-                  <div className="max-h-56 overflow-y-auto flex flex-wrap gap-1.5">
-                    {ALL_DISHES
-                      .filter((d) => !dishQuery || d.dish.toLowerCase().includes(dishQuery.toLowerCase()))
-                      .slice(0, 120)
-                      .map((d) => {
-                        const on = form.dishes.some((x) => x.dish === d.dish)
-                        return (
-                          <button
-                            key={d.dish}
-                            type="button"
-                            onClick={() => setForm((f) => ({
-                              ...f,
-                              dishes: on ? f.dishes.filter((x) => x.dish !== d.dish) : [...f.dishes, d],
-                            }))}
-                            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                              on ? 'bg-teal-700 text-cream-50' : 'bg-cream-100 text-stone-600 hover:bg-teal-50 hover:text-teal-800'
-                            }`}
-                          >
-                            {d.dish}
-                          </button>
-                        )
-                      })}
+                ) : (
+                  <div className="rounded-xl border border-cream-200 p-3">
+                    <div className="relative mb-2">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                      <input
+                        value={dishQuery} onChange={(e) => setDishQuery(e.target.value)}
+                        placeholder={t('Search the full menu — e.g. galouti, biryani, phirni…')}
+                        className="w-full rounded-lg border border-cream-200 pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-400"
+                      />
+                    </div>
+                    {form.dishes.length > 0 && (
+                      <p className="text-xs text-teal-800 bg-teal-50 rounded-lg px-3 py-2 mb-2">
+                        {form.dishes.length} {t('dishes selected')}
+                      </p>
+                    )}
+                    <div className="max-h-56 overflow-y-auto flex flex-wrap gap-1.5">
+                      {ALL_DISHES
+                        .filter((d) => !dishQuery || d.dish.toLowerCase().includes(dishQuery.toLowerCase()))
+                        .slice(0, 120)
+                        .map((d) => {
+                          const on = form.dishes.some((x) => x.dish === d.dish)
+                          return (
+                            <button
+                              key={d.dish}
+                              type="button"
+                              onClick={() => setForm((f) => ({
+                                ...f,
+                                dishes: on ? f.dishes.filter((x) => x.dish !== d.dish) : [...f.dishes, d],
+                              }))}
+                              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                                on ? 'bg-teal-700 text-cream-50' : 'bg-cream-100 text-stone-600 hover:bg-teal-50 hover:text-teal-800'
+                              }`}
+                            >
+                              {d.dish}
+                            </button>
+                          )
+                        })}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
+              {form.dishes.length > 0 && (
+                <a
+                  href={waLink(CONTACT.phones[0], `*${t('Menu request')}*\n${form.eventType} · ${form.guests} ${t('guests')}\n${pkg ? pkg.name : t('Custom request')}\n\n${form.dishes.map((d) => `• ${d.dish}`).join('\n')}`)}
+                  target="_blank" rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full bg-green-600 text-white px-5 py-2.5 text-sm font-bold hover:bg-green-700"
+                >
+                  {t('Get this menu on WhatsApp')}
+                </a>
+              )}
               {estimate != null && (
                 <p className="text-sm bg-gold-300/30 border border-gold-400/40 rounded-xl px-4 py-3 text-teal-900">
                   {t('Rough estimate for')} {form.guests} {t('guests:')} <strong>{fmtINR(estimate)}</strong> {t('(final quote may vary)')}

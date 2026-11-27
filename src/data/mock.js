@@ -477,3 +477,60 @@ export const CLIENTS = [
 ]
 
 export const fmtINR = (n) => '₹' + n.toLocaleString('en-IN')
+
+// Per-package menu builder — each entry is a category dropdown with a max pick count.
+// `sections` maps to MENU_LIBRARY section names.
+export const PACKAGE_PICKS = {
+  'pkg-normal': [
+    { label: 'Veg Starters', sections: ['Veg Starters & Snacks'], count: 3 },
+    { label: 'Non-Veg Starters', sections: ['Non-Veg Starters'], count: 2 },
+    { label: 'Chicken Dishes', sections: ['Chicken — Main Course'], count: 1 },
+    { label: 'Mutton Dishes', sections: ['Mutton — Main Course'], count: 1 },
+    { label: 'Biryani & Rice', sections: ['Biryani & Rice'], count: 1 },
+    { label: 'Veg Mains', sections: ['Vegetarian — Main Course'], count: 2 },
+    { label: 'Dal & Tawa', sections: ['Dal & Tawa'], count: 1 },
+    { label: 'Breads', sections: ['Roti ki Tokri'], count: 2 },
+    { label: 'Desserts', sections: ['Desserts'], count: 1 },
+    { label: 'After Dinner / Drinks', sections: ['After Dinner'], count: 1 },
+  ],
+  'pkg-standard': [
+    { label: 'Non-Veg Starters', sections: ['Non-Veg Starters'], count: 3 },
+    { label: 'Veg Starters', sections: ['Veg Starters & Snacks'], count: 4 },
+    { label: 'Chicken Dishes', sections: ['Chicken — Main Course'], count: 2 },
+    { label: 'Mutton Dishes', sections: ['Mutton — Main Course'], count: 1 },
+    { label: 'Biryani & Rice', sections: ['Biryani & Rice'], count: 1 },
+    { label: 'Veg Mains', sections: ['Vegetarian — Main Course'], count: 3 },
+    { label: 'Dal & Tawa', sections: ['Dal & Tawa'], count: 1 },
+    { label: 'Breads', sections: ['Roti ki Tokri'], count: 3 },
+    { label: 'Desserts', sections: ['Desserts'], count: 2 },
+    { label: 'After Dinner / Drinks', sections: ['After Dinner'], count: 1 },
+  ],
+  'pkg-vip': [
+    { label: 'Non-Veg Starters', sections: ['Non-Veg Starters'], count: 4 },
+    { label: 'Veg Starters', sections: ['Veg Starters & Snacks'], count: 4 },
+    { label: 'Chicken Dishes', sections: ['Chicken — Main Course'], count: 2 },
+    { label: 'Mutton Dishes', sections: ['Mutton — Main Course'], count: 2 },
+    { label: 'Fish & Prawns', sections: ['Fish & Prawns'], count: 1 },
+    { label: 'Zafraan Signature', sections: ['Zafraan Signature'], count: 1 },
+    { label: 'Biryani & Rice', sections: ['Biryani & Rice'], count: 1 },
+    { label: 'Veg Mains', sections: ['Vegetarian — Main Course'], count: 4 },
+    { label: 'Dal & Tawa', sections: ['Dal & Tawa'], count: 2 },
+    { label: 'Breads', sections: ['Roti ki Tokri'], count: 3 },
+    { label: 'Desserts', sections: ['Desserts'], count: 3 },
+    { label: 'After Dinner / Drinks', sections: ['After Dinner'], count: 2 },
+  ],
+  'pkg-speciality': [
+    { label: 'Zafraan Signature', sections: ['Zafraan Signature'], count: 3 },
+    { label: 'Non-Veg Starters', sections: ['Non-Veg Starters'], count: 5 },
+    { label: 'Veg Starters', sections: ['Veg Starters & Snacks'], count: 5 },
+    { label: 'Mutton Dishes', sections: ['Mutton — Main Course'], count: 2 },
+    { label: 'Chicken Dishes', sections: ['Chicken — Main Course'], count: 2 },
+    { label: 'Fish & Prawns', sections: ['Fish & Prawns'], count: 1 },
+    { label: 'Biryani & Rice', sections: ['Biryani & Rice'], count: 2 },
+    { label: 'Veg Mains', sections: ['Vegetarian — Main Course'], count: 5 },
+    { label: 'Dal & Tawa', sections: ['Dal & Tawa'], count: 2 },
+    { label: 'Breads', sections: ['Roti ki Tokri'], count: 4 },
+    { label: 'Desserts', sections: ['Desserts'], count: 4 },
+    { label: 'After Dinner / Drinks', sections: ['After Dinner'], count: 2 },
+  ],
+}
