@@ -1,26 +1,35 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useSearchParams } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, ArrowRight, CheckCircle2, CalendarDays, UtensilsCrossed, User, ClipboardCheck, Search, ChevronDown } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Search } from 'lucide-react'
 import { addBooking } from '@/features/bookings/bookingsSlice'
-import { EVENT_TYPES, CATERING_TYPES, fmtINR, PACKAGE_PICKS, CONTACT } from '@/data/mock'
-import { waLink } from '@/lib/procurement'
-import { ALL_DISHES } from '@/lib/procurement'
+import { EVENT_TYPES, fmtINR, PACKAGE_PICKS, CONTACT } from '@/data/mock'
+import { ALL_DISHES, waLink } from '@/lib/procurement'
 import { useT } from '@/lib/i18n'
 
-const STEPS = [
-  { id: 'event', label: 'Event', icon: CalendarDays },
-  { id: 'menu', label: 'Menu', icon: UtensilsCrossed },
-  { id: 'contact', label: 'Contact', icon: User },
-  { id: 'review', label: 'Review', icon: ClipboardCheck },
-]
+const input = 'w-full rounded-lg border border-cream-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-400'
+const label = 'block text-[11px] font-semibold text-stone-500 uppercase tracking-wide mb-1'
 
-const input = 'w-full rounded-xl border border-cream-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-400'
-const label = 'block text-sm font-medium text-stone-600 mb-1.5'
+// Auto-cycling slide card — swap `slides` for real photo URLs later.
+function SlideShow({ title, slides }) {
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setI((x) => (x + 1) % slides.length), 3200)
+    return () => clearInterval(id)
+  }, [slides.length])
+  const s = slides[i]
+  return (
+    <div className={`relative rounded-2xl overflow-hidden h-36 md:h-44 flex-1 min-w-[140px] ${s.bg}`}>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-3">
+        <p className="font-display text-lg md:text-xl font-semibold text-cream-50 drop-shadow">{s.text}</p>
+        <p className="text-[10px] uppercase tracking-widest text-cream-200/80 mt-1">{title}</p>
+      </div>
+    </div>
+  )
+}
 
-// One category row — collapsible dropdown, picks capped at pick.count.
-function PickDropdown({ pick, dishes, setForm, t }) {
+// "Select N items" dropdown inside a package card.
+function PickRow({ pick, dishes, setForm, onPick, t }) {
   const [open, setOpen] = useState(false)
   const pool = ALL_DISHES.filter((d) => pick.sections.includes(d.section))
   const picked = dishes.filter((d) => pick.sections.includes(d.section))
@@ -29,6 +38,7 @@ function PickDropdown({ pick, dishes, setForm, t }) {
   const toggle = (d) => {
     const on = dishes.some((x) => x.dish === d.dish)
     if (!on && full) return
+    onPick()
     setForm((f) => ({
       ...f,
       dishes: on ? f.dishes.filter((x) => x.dish !== d.dish) : [...f.dishes, d],
@@ -36,55 +46,36 @@ function PickDropdown({ pick, dishes, setForm, t }) {
   }
 
   return (
-    <div>
+    <div className="border-t border-cream-200">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-cream-50"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left hover:bg-cream-50"
       >
-        <span className="flex items-center gap-2 min-w-0">
-          <span className="text-sm font-semibold text-teal-900">{t(pick.label)}</span>
-          <span className={`text-[11px] font-bold rounded-full px-2 py-0.5 ${full ? 'bg-teal-700 text-cream-50' : 'bg-cream-100 text-stone-500'}`}>
+        <span className="text-[11px] font-semibold text-teal-900 truncate">+ {t(pick.label)}</span>
+        <span className="flex items-center gap-1.5 shrink-0">
+          <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.5 ${full ? 'bg-teal-700 text-cream-50' : 'bg-gold-300/50 text-teal-900'}`}>
             {picked.length}/{pick.count}
           </span>
-        </span>
-        <span className="flex items-center gap-2 min-w-0">
-          {picked.length > 0 && !open && (
-            <span className="hidden sm:block text-xs text-stone-400 truncate max-w-[220px]">
-              {picked.map((d) => d.dish).join(', ')}
-            </span>
-          )}
-          <ChevronDown size={15} className={`text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown size={12} className={`text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
         </span>
       </button>
       {open && (
-        <div className="px-4 pb-3">
-          {picked.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {picked.map((d) => (
-                <button
-                  key={d.dish} type="button" onClick={() => toggle(d)}
-                  className="rounded-full bg-teal-700 text-cream-50 px-2.5 py-1 text-[11px] font-medium"
-                >
-                  {d.dish} ✕
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="max-h-44 overflow-y-auto grid sm:grid-cols-2 gap-1">
+        <div className="px-2 pb-2">
+          <div className="max-h-40 overflow-y-auto space-y-0.5">
             {pool.map((d) => {
               const on = dishes.some((x) => x.dish === d.dish)
               const blocked = !on && full
               return (
                 <button
                   key={d.dish} type="button" disabled={blocked} onClick={() => toggle(d)}
-                  className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors ${
-                    on ? 'bg-teal-50 text-teal-800 ring-1 ring-teal-300'
+                  className={`w-full flex items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] font-medium ${
+                    on ? 'bg-teal-700 text-cream-50'
                     : blocked ? 'text-stone-300 cursor-not-allowed'
                     : 'text-stone-600 hover:bg-cream-100'
                   }`}
                 >
-                  <span className={`w-3.5 h-3.5 rounded border grid place-items-center text-[9px] shrink-0 ${on ? 'bg-teal-600 border-teal-600 text-white' : 'border-stone-300'}`}>
+                  <span className={`w-3 h-3 rounded border grid place-items-center text-[8px] shrink-0 ${on ? 'bg-cream-50 border-cream-50 text-teal-800' : 'border-stone-300'}`}>
                     {on ? '✓' : ''}
                   </span>
                   {d.dish}
@@ -92,9 +83,31 @@ function PickDropdown({ pick, dishes, setForm, t }) {
               )
             })}
           </div>
-          {full && <p className="text-[11px] text-teal-700 mt-2">{t('Category full — remove a dish to swap')}</p>}
         </div>
       )}
+    </div>
+  )
+}
+
+function PackageCard({ pkg, picks, active, onSelect, dishes, setForm, t }) {
+  return (
+    <div
+      onClick={onSelect}
+      className={`w-60 shrink-0 rounded-2xl border-2 overflow-hidden cursor-pointer transition-all bg-white ${
+        active ? 'border-teal-600 shadow-lg shadow-teal-900/10' : 'border-cream-200 hover:border-teal-300'
+      }`}
+    >
+      <div className={`px-3 py-3 ${active ? 'bg-teal-700 text-cream-50' : 'bg-gradient-to-br ' + pkg.gradient + ' text-white'}`}>
+        <p className="font-display font-semibold leading-tight">{pkg.name}</p>
+        <p className="text-[11px] opacity-85 mt-0.5">
+          {fmtINR(pkg.pricePerHead)}{t(' /head')} · {t('min')} {pkg.minGuests} {t('pax')}
+        </p>
+      </div>
+      <div>
+        {picks.map((pick) => (
+          <PickRow key={pick.label} pick={pick} dishes={dishes} setForm={setForm} onPick={onSelect} t={t} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -106,34 +119,44 @@ export default function BookFlow() {
   const allBookings = useSelector((s) => s.bookings.list)
   const dispatch = useDispatch()
 
-  const [step, setStep] = useState(0)
   const [done, setDone] = useState(null)
-  const [form, setForm] = useState({
-    eventType: '', cateringType: 'full', date: '', time: '', guests: 50, vegGuests: '', venue: '',
-    packageId: params.get('package') ?? '', customMenu: '', dishes: [],
-    name: '', phone: '', email: '', notes: '',
-  })
+  const [customMode, setCustomMode] = useState(false)
   const [dishQuery, setDishQuery] = useState('')
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e?.target ? e.target.value : e }))
+  const [form, setForm] = useState({
+    name: '', phone: '', date: '', guests: 50, vegGuests: '', venue: '',
+    eventType: 'Wedding', cateringType: 'full',
+    packageId: params.get('package') ?? '', customMenu: '', dishes: [],
+  })
 
   const pkg = packages.find((p) => p.id === form.packageId)
-  const estimate = useMemo(
-    () => (pkg ? pkg.pricePerHead * Number(form.guests || 0) : null),
-    [pkg, form.guests]
-  )
+  const canSubmit = form.name.trim() && form.phone.trim() && form.date && form.guests > 0 && (form.packageId || form.customMenu.trim() || form.dishes.length)
 
-  const canNext = [
-    form.eventType && form.date && form.guests > 0 && form.venue.trim(),
-    form.packageId || form.customMenu.trim(),
-    form.name.trim() && form.phone.trim(),
-    true,
-  ][step]
+  const slideshowA = [
+    { text: t('Live Kebab Counter'), bg: 'bg-gradient-to-br from-teal-800 to-teal-950' },
+    { text: t('Biryani Handi'), bg: 'bg-gradient-to-br from-gold-500 to-amber-700' },
+    { text: t('Chaat Counter'), bg: 'bg-gradient-to-br from-teal-700 to-teal-900' },
+    { text: t('Wedding Buffet'), bg: 'bg-gradient-to-br from-amber-600 to-teal-950' },
+  ]
+  const slideshowB = [
+    { text: t('Dessert Counter'), bg: 'bg-gradient-to-br from-amber-500 to-gold-600' },
+    { text: t('Mocktail Bar'), bg: 'bg-gradient-to-br from-teal-900 to-teal-700' },
+    { text: t('Tandoor Station'), bg: 'bg-gradient-to-br from-teal-950 to-amber-800' },
+    { text: t('Fruit & Salad Bar'), bg: 'bg-gradient-to-br from-gold-600 to-teal-800' },
+  ]
+
+  const toggleDish = (d) =>
+    setForm((f) => ({
+      ...f,
+      dishes: f.dishes.some((x) => x.dish === d.dish)
+        ? f.dishes.filter((x) => x.dish !== d.dish)
+        : [...f.dishes, d],
+    }))
 
   const submit = () => {
-    const date = new Date(`${form.date}T${form.time || '12:00'}`).toISOString()
+    const date = new Date(`${form.date}T12:00`).toISOString()
     const veg = Number(form.vegGuests || 0)
     const booking = {
-      client: { name: form.name.trim(), phone: form.phone.trim(), email: form.email.trim() },
+      client: { name: form.name.trim(), phone: form.phone.trim(), email: '' },
       eventType: form.eventType,
       cateringType: form.cateringType,
       date,
@@ -141,28 +164,31 @@ export default function BookFlow() {
       pax: { veg, nonVeg: Math.max(Number(form.guests) - veg, 0) },
       venue: form.venue.trim(),
       packageId: form.packageId || null,
-      amount: estimate,
+      amount: pkg ? pkg.pricePerHead * Number(form.guests || 0) : null,
       menuItems: form.dishes.map((d) => ({ dish: d.dish, group: d.group, requested: true })),
       notes: [
         ...(form.customMenu.trim() ? [`Custom menu request: ${form.customMenu.trim()}`] : []),
         ...(form.dishes.length ? [`Customer picked ${form.dishes.length} dishes — requests, not yet approved`] : []),
-        ...(form.notes.trim() ? [form.notes.trim()] : []),
       ],
     }
     dispatch(addBooking(booking, allBookings))
-    // prepare() runs before we can read the ref back — recompute the same ref
     const max = allBookings.reduce((m, b) => Math.max(m, parseInt(b.ref.split('-')[1], 10) || 0), 2400)
     setDone({ ref: `MQ-${max + 1}` })
   }
+
+  const menuText = useMemo(() => [
+    `*${t('Menu request')} — Muqim Caterers*`,
+    `${form.name || '—'} · ${form.guests} ${t('pax')} · ${form.date || '—'}`,
+    pkg ? pkg.name : t('Custom request'), '',
+    ...form.dishes.map((d) => `• ${d.dish}`),
+  ].join('\n'), [form, pkg, t])
 
   if (done) {
     return (
       <div className="max-w-lg mx-auto px-4 py-24 text-center">
         <CheckCircle2 size={56} className="mx-auto text-teal-600 mb-6" />
         <h1 className="font-display text-3xl font-semibold text-teal-900">{t('Inquiry received!')}</h1>
-        <p className="text-stone-500 mt-3">
-          {t('Our team will call you within 24 hours with a quote. Save your reference:')}
-        </p>
+        <p className="text-stone-500 mt-3">{t('Our team will call you within 24 hours with a quote. Save your reference:')}</p>
         <p className="mt-6 inline-block rounded-2xl bg-teal-50 border border-teal-200 px-8 py-4 font-display text-3xl font-semibold text-teal-800 tracking-wider">
           {done.ref}
         </p>
@@ -178,300 +204,180 @@ export default function BookFlow() {
     )
   }
 
-  return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="font-display text-4xl font-semibold text-teal-900 text-center">{t('Book your event')}</h1>
-      <p className="text-stone-500 text-center mt-2 mb-10">{t('Two minutes now — a quote within 24 hours.')}</p>
+  const pickLabels = pkg ? (PACKAGE_PICKS[pkg.id] ?? []) : []
+  const grouped = pickLabels.map((p) => ({ label: p.label, items: form.dishes.filter((d) => p.sections.includes(d.section)) })).filter((g) => g.items.length)
+  const ungrouped = form.dishes.filter((d) => !grouped.some((g) => g.items.includes(d)))
 
-      <div className="flex justify-center gap-2 mb-10">
-        {STEPS.map((s, i) => (
-          <div key={s.id} className="flex items-center gap-2">
-            <span
-              className={`w-9 h-9 rounded-full grid place-items-center text-sm font-semibold transition-colors ${
-                i < step ? 'bg-teal-600 text-cream-50'
-                : i === step ? 'bg-teal-700 text-cream-50 ring-4 ring-teal-100'
-                : 'bg-cream-200 text-stone-500'
-              }`}
-            >
-              {i < step ? '✓' : i + 1}
-            </span>
-            <span className={`text-sm font-medium hidden sm:block ${i === step ? 'text-teal-800' : 'text-stone-400'}`}>
-              {t(s.label)}
-            </span>
-            {i < STEPS.length - 1 && <span className="w-8 h-px bg-cream-300 mx-1" />}
-          </div>
-        ))}
+  return (
+    <div className="max-w-[1400px] mx-auto px-3 md:px-6 py-6 md:py-8">
+      {/* ── Top strip: slideshows flanking the logo ── */}
+      <div className="flex items-stretch gap-3 mb-6">
+        <SlideShow title={t('Catering photos')} slides={slideshowA} />
+        <img src="/logo.jpeg" alt="Muqim Caterer's" className="h-36 md:h-44 w-auto rounded-2xl bg-white object-contain shrink-0 shadow-sm" />
+        <SlideShow title={t('Counter photos')} slides={slideshowB} />
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={step}
-          initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -24 }}
-          transition={{ duration: 0.25 }}
-          className="bg-white rounded-2xl border border-cream-200 p-6 md:p-8"
-        >
-          {step === 0 && (
-            <div className="space-y-5">
-              <div>
-                <span className={label}>{t('What are we catering?')}</span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {EVENT_TYPES.map((ev) => (
-                    <button
-                      key={ev}
-                      onClick={() => set('eventType')(ev)}
-                      className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
-                        form.eventType === ev
-                          ? 'border-teal-600 bg-teal-50 text-teal-800'
-                          : 'border-cream-200 text-stone-600 hover:border-teal-300'
-                      }`}
-                    >
-                      {t(ev)}
-                    </button>
-                  ))}
+      <div className="flex flex-col lg:flex-row gap-5 items-start">
+        {/* ── Left: preview of menu selected ── */}
+        <aside className="w-full lg:w-72 shrink-0 lg:sticky lg:top-24">
+          <div className="bg-white rounded-2xl border-2 border-gold-400/60 overflow-hidden shadow-sm">
+            <div className="bg-teal-950 text-cream-50 px-4 py-3 text-center relative">
+              <img src="/logo.jpeg" alt="" className="absolute inset-0 m-auto h-full opacity-15 object-contain" />
+              <p className="relative font-display font-semibold text-sm tracking-wide">{t('Preview of menu selected')}</p>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className={label}>{t('Name')}</span>
+                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('Full name')} className={input} />
+                </div>
+                <div>
+                  <span className={label}>{t('Mobile')}</span>
+                  <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+91 …" className={input} />
+                </div>
+                <div>
+                  <span className={label}>{t('Pax')}</span>
+                  <input type="number" min="10" value={form.guests} onChange={(e) => setForm({ ...form, guests: e.target.value })} className={input} />
+                </div>
+                <div>
+                  <span className={label}>{t('Date')}</span>
+                  <input type="date" value={form.date} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setForm({ ...form, date: e.target.value })} className={input} />
+                </div>
+                <div className="col-span-2">
+                  <span className={label}>{t('Event')}</span>
+                  <select value={form.eventType} onChange={(e) => setForm({ ...form, eventType: e.target.value })} className={input}>
+                    {EVENT_TYPES.map((ev) => <option key={ev} value={ev}>{t(ev)}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <span className={label}>{t('Venue / area')}</span>
+                  <input value={form.venue} onChange={(e) => setForm({ ...form, venue: e.target.value })} placeholder={t('e.g. City Banquets, Gomti Nagar')} className={input} />
                 </div>
               </div>
-              <div className="grid sm:grid-cols-2 gap-5">
-                <div>
-                  <label className={label}>{t('Event date')}</label>
-                  <input type="date" value={form.date} onChange={set('date')} className={input} min={new Date().toISOString().slice(0, 10)} />
-                </div>
-                <div>
-                  <label className={label}>{t('Time')}</label>
-                  <input type="time" value={form.time} onChange={set('time')} className={input} />
-                </div>
+
+              <div className="border-t border-dashed border-cream-300 pt-3 min-h-[80px]">
+                {form.dishes.length === 0 ? (
+                  <p className="text-xs text-stone-400 text-center py-4">
+                    {t('Pick a package and select dishes — your menu card appears here.')}
+                  </p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {grouped.map((g) => (
+                      <div key={g.label}>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-gold-600">{t(g.label)}</p>
+                        <p className="text-xs text-stone-600 leading-relaxed">{g.items.map((d) => d.dish).join(' · ')}</p>
+                      </div>
+                    ))}
+                    {ungrouped.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-gold-600">{t('Selected dishes')}</p>
+                        <p className="text-xs text-stone-600 leading-relaxed">{ungrouped.map((d) => d.dish).join(' · ')}</p>
+                      </div>
+                    )}
+                    <p className="text-[11px] text-teal-700 font-semibold">{form.dishes.length} {t('dishes selected')}</p>
+                  </div>
+                )}
               </div>
-              <div>
-                <span className={label}>{t('Catering type')}</span>
-                <div className="grid sm:grid-cols-3 gap-2">
-                  {CATERING_TYPES.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => set('cateringType')(c.id)}
-                      className={`rounded-xl border px-3 py-3 text-left transition-colors ${
-                        form.cateringType === c.id
-                          ? 'border-teal-600 bg-teal-50'
-                          : 'border-cream-200 hover:border-teal-300'
-                      }`}
-                    >
-                      <p className={`text-sm font-semibold ${form.cateringType === c.id ? 'text-teal-800' : 'text-stone-700'}`}>
-                        {t(c.label)}
-                      </p>
-                      <p className="text-xs text-stone-500 mt-0.5">{t(c.desc)}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-3 gap-5">
-                <div>
-                  <label className={label}>{t('Total guests *')}</label>
-                  <input type="number" min="10" value={form.guests} onChange={set('guests')} className={input} />
-                </div>
-                <div>
-                  <label className={label}>{t('Veg guests (approx)')}</label>
-                  <input
-                    type="number" min="0" max={form.guests}
-                    value={form.vegGuests}
-                    onChange={set('vegGuests')}
-                    placeholder="e.g. 60"
-                    className={input}
-                  />
-                </div>
-                <div>
-                  <label className={label}>{t('Non-veg guests')}</label>
-                  <input
-                    value={Math.max(Number(form.guests) - Number(form.vegGuests || 0), 0)}
-                    readOnly
-                    className={`${input} bg-cream-50 text-stone-500`}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className={label}>{t('Venue / area')}</label>
-                <input value={form.venue} onChange={set('venue')} placeholder={t('e.g. City Banquets, Gomti Nagar')} className={input} />
+
+              {pkg && (
+                <p className="text-xs bg-gold-300/30 border border-gold-400/40 rounded-lg px-3 py-2 text-teal-900">
+                  {pkg.name} · {t('Rough estimate for')} {form.guests} {t('guests:')} <strong>{fmtINR(pkg.pricePerHead * Number(form.guests || 0))}</strong>
+                </p>
+              )}
+
+              <div className="space-y-2 pt-1">
+                {form.dishes.length > 0 && (
+                  <a
+                    href={waLink(CONTACT.phones[0], menuText)}
+                    target="_blank" rel="noreferrer"
+                    className="block text-center rounded-lg bg-red-600 text-white px-4 py-2.5 text-xs font-bold tracking-wide hover:bg-red-700"
+                  >
+                    {t('SAVE — Get your menu on WhatsApp')}
+                  </a>
+                )}
+                <button
+                  onClick={submit} disabled={!canSubmit}
+                  className="w-full rounded-lg bg-gold-500 text-teal-950 px-4 py-2.5 text-sm font-bold hover:bg-gold-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {t('Submit inquiry')}
+                </button>
               </div>
             </div>
-          )}
+          </div>
+        </aside>
 
-          {step === 1 && (
-            <div className="space-y-4">
-              <span className={label}>{t('Pick a package (or go custom below)')}</span>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {packages.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setForm((f) => ({ ...f, packageId: f.packageId === p.id ? '' : p.id }))}
-                    className={`text-left rounded-xl border p-4 transition-colors ${
-                      form.packageId === p.id
-                        ? 'border-teal-600 bg-teal-50 ring-1 ring-teal-600'
-                        : 'border-cream-200 hover:border-teal-300'
-                    }`}
-                  >
-                    <p className="font-semibold text-sm text-teal-900">{p.name}</p>
-                    <p className="text-xs text-stone-500 mt-1">{fmtINR(p.pricePerHead)}{t(' /head')} · {t('min')} {p.minGuests}</p>
-                  </button>
-                ))}
-              </div>
+        {/* ── Right: package cards row ── */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-stone-600 mb-3">{t('Pick a package — select dishes per category')}</p>
+          <div className="flex gap-4 overflow-x-auto pb-4 items-start">
+            {packages.map((p) => (
+              <PackageCard
+                key={p.id}
+                pkg={p}
+                picks={PACKAGE_PICKS[p.id] ?? []}
+                active={form.packageId === p.id}
+                onSelect={() => setForm((f) => ({ ...f, packageId: f.packageId === p.id ? '' : p.id }))}
+                dishes={form.dishes}
+                setForm={setForm}
+                t={t}
+              />
+            ))}
+          </div>
+
+          {/* ── Red custom-menu button ── */}
+          <button
+            onClick={() => setCustomMode(!customMode)}
+            className="mt-4 w-full rounded-xl bg-red-600 text-white font-display font-semibold text-base md:text-lg py-4 tracking-wide hover:bg-red-700 transition-colors"
+          >
+            {t('If you wish to customise your menu — tap here')}
+          </button>
+
+          {customMode && (
+            <div className="mt-4 bg-white rounded-2xl border border-cream-200 p-4 md:p-5 space-y-4">
               <div>
                 <label className={label}>{t('Or describe your own menu / requirements')}</label>
                 <textarea
                   value={form.customMenu}
-                  onChange={set('customMenu')}
+                  onChange={(e) => setForm({ ...form, customMenu: e.target.value })}
                   rows={3}
                   placeholder={t('e.g. Vegetarian only, live chaat counter, Jain options for 20 guests…')}
                   className={input}
                 />
               </div>
               <div>
-                <label className={label}>
-                  {pkg ? t('Build your menu — pick per category (requests, we confirm the final menu)') : t('Pick specific dishes (optional — requests, we confirm the final menu)')}
-                </label>
-                {pkg && PACKAGE_PICKS[pkg.id] ? (
-                  <div className="rounded-xl border border-cream-200 divide-y divide-cream-200 bg-white">
-                    {PACKAGE_PICKS[pkg.id].map((pick) => (
-                      <PickDropdown key={pick.label} pick={pick} dishes={form.dishes} setForm={setForm} t={t} />
-                    ))}
-                    {form.dishes.length > 0 && (
-                      <p className="text-xs text-teal-800 bg-teal-50 px-4 py-2.5">
-                        {form.dishes.length} {t('dishes selected')}
-                      </p>
-                    )}
+                <label className={label}>{t('Pick specific dishes (optional — requests, we confirm the final menu)')}</label>
+                <div className="rounded-xl border border-cream-200 p-3">
+                  <div className="relative mb-2">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                    <input
+                      value={dishQuery} onChange={(e) => setDishQuery(e.target.value)}
+                      placeholder={t('Search the full menu — e.g. galouti, biryani, phirni…')}
+                      className="w-full rounded-lg border border-cream-200 pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-400"
+                    />
                   </div>
-                ) : (
-                  <div className="rounded-xl border border-cream-200 p-3">
-                    <div className="relative mb-2">
-                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
-                      <input
-                        value={dishQuery} onChange={(e) => setDishQuery(e.target.value)}
-                        placeholder={t('Search the full menu — e.g. galouti, biryani, phirni…')}
-                        className="w-full rounded-lg border border-cream-200 pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-400"
-                      />
-                    </div>
-                    {form.dishes.length > 0 && (
-                      <p className="text-xs text-teal-800 bg-teal-50 rounded-lg px-3 py-2 mb-2">
-                        {form.dishes.length} {t('dishes selected')}
-                      </p>
-                    )}
-                    <div className="max-h-56 overflow-y-auto flex flex-wrap gap-1.5">
-                      {ALL_DISHES
-                        .filter((d) => !dishQuery || d.dish.toLowerCase().includes(dishQuery.toLowerCase()))
-                        .slice(0, 120)
-                        .map((d) => {
-                          const on = form.dishes.some((x) => x.dish === d.dish)
-                          return (
-                            <button
-                              key={d.dish}
-                              type="button"
-                              onClick={() => setForm((f) => ({
-                                ...f,
-                                dishes: on ? f.dishes.filter((x) => x.dish !== d.dish) : [...f.dishes, d],
-                              }))}
-                              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                                on ? 'bg-teal-700 text-cream-50' : 'bg-cream-100 text-stone-600 hover:bg-teal-50 hover:text-teal-800'
-                              }`}
-                            >
-                              {d.dish}
-                            </button>
-                          )
-                        })}
-                    </div>
+                  <div className="max-h-52 overflow-y-auto flex flex-wrap gap-1.5">
+                    {ALL_DISHES
+                      .filter((d) => !dishQuery || d.dish.toLowerCase().includes(dishQuery.toLowerCase()))
+                      .slice(0, 120)
+                      .map((d) => {
+                        const on = form.dishes.some((x) => x.dish === d.dish)
+                        return (
+                          <button
+                            key={d.dish} type="button" onClick={() => toggleDish(d)}
+                            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                              on ? 'bg-teal-700 text-cream-50' : 'bg-cream-100 text-stone-600 hover:bg-teal-50 hover:text-teal-800'
+                            }`}
+                          >
+                            {d.dish}
+                          </button>
+                        )
+                      })}
                   </div>
-                )}
-              </div>
-              {form.dishes.length > 0 && (
-                <a
-                  href={waLink(CONTACT.phones[0], `*${t('Menu request')}*\n${form.eventType} · ${form.guests} ${t('guests')}\n${pkg ? pkg.name : t('Custom request')}\n\n${form.dishes.map((d) => `• ${d.dish}`).join('\n')}`)}
-                  target="_blank" rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full bg-green-600 text-white px-5 py-2.5 text-sm font-bold hover:bg-green-700"
-                >
-                  {t('Get this menu on WhatsApp')}
-                </a>
-              )}
-              {estimate != null && (
-                <p className="text-sm bg-gold-300/30 border border-gold-400/40 rounded-xl px-4 py-3 text-teal-900">
-                  {t('Rough estimate for')} {form.guests} {t('guests:')} <strong>{fmtINR(estimate)}</strong> {t('(final quote may vary)')}
-                </p>
-              )}
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-5">
-              <div className="grid sm:grid-cols-2 gap-5">
-                <div>
-                  <label className={label}>{t('Your name *')}</label>
-                  <input value={form.name} onChange={set('name')} placeholder={t('Full name')} className={input} />
-                </div>
-                <div>
-                  <label className={label}>{t('Phone *')}</label>
-                  <input value={form.phone} onChange={set('phone')} placeholder="+91 …" className={input} />
                 </div>
               </div>
-              <div>
-                <label className={label}>{t('Email (optional)')}</label>
-                <input type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" className={input} />
-              </div>
-              <div>
-                <label className={label}>{t('Anything else we should know?')}</label>
-                <textarea value={form.notes} onChange={set('notes')} rows={3} placeholder={t('Parking, floor, timings, dietary needs…')} className={input} />
-              </div>
             </div>
           )}
-
-          {step === 3 && (
-            <div>
-              <h3 className="font-display text-xl font-semibold text-teal-900 mb-5">{t('Review your inquiry')}</h3>
-              <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                {[
-                  [t('Event'), t(form.eventType)],
-                  [t('Catering type'), t(CATERING_TYPES.find((c) => c.id === form.cateringType)?.label)],
-                  [t('Date'), `${form.date}${form.time ? ` · ${form.time}` : ''}`],
-                  [t('Guests'), `${form.guests}${form.vegGuests ? ` (${form.vegGuests} ${t('veg')} · ${Math.max(Number(form.guests) - Number(form.vegGuests), 0)} ${t('non-veg')})` : ''}`],
-                  [t('Venue'), form.venue],
-                  [t('Menu'), `${pkg ? pkg.name : t('Custom request')}${form.dishes.length ? ` · ${form.dishes.length} ${t('dishes picked')}` : ''}`],
-                  [t('Contact'), `${form.name} · ${form.phone}`],
-                ].map(([k, v]) => (
-                  <div key={k}>
-                    <dt className="text-stone-400 text-xs uppercase tracking-wide">{k}</dt>
-                    <dd className="font-medium text-stone-800 mt-0.5">{v}</dd>
-                  </div>
-                ))}
-              </dl>
-              {estimate != null && (
-                <p className="mt-6 text-sm bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 text-teal-900">
-                  {t('Estimated total:')} <strong className="text-lg">{fmtINR(estimate)}</strong>
-                </p>
-              )}
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      <div className="flex justify-between mt-6">
-        <button
-          onClick={() => setStep((s) => s - 1)}
-          disabled={step === 0}
-          className="inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-stone-600 disabled:opacity-30 hover:text-teal-700"
-        >
-          <ArrowLeft size={16} /> {t('Back')}
-        </button>
-        {step < 3 ? (
-          <button
-            onClick={() => canNext && setStep((s) => s + 1)}
-            disabled={!canNext}
-            className="inline-flex items-center gap-2 rounded-full bg-teal-700 text-cream-50 px-6 py-3 text-sm font-semibold hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {t('Continue')} <ArrowRight size={16} />
-          </button>
-        ) : (
-          <button
-            onClick={submit}
-            className="inline-flex items-center gap-2 rounded-full bg-gold-500 text-teal-950 px-7 py-3 text-sm font-bold hover:bg-gold-400"
-          >
-            {t('Submit inquiry')} <CheckCircle2 size={16} />
-          </button>
-        )}
+        </div>
       </div>
     </div>
   )
