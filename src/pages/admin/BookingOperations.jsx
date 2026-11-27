@@ -23,8 +23,10 @@ const input = 'rounded-lg border border-stone-200 px-2.5 py-1.5 text-xs outline-
 function DishPicker({ booking, onClose }) {
   const dispatch = useDispatch()
   const [q, setQ] = useState('')
-  const existing = new Set((booking.menuItems ?? []).map((m) => m.dish))
-  const visible = ALL_DISHES.filter((d) => !existing.has(d.dish) && (!q || d.dish.toLowerCase().includes(q.toLowerCase())))
+  const [showAdded, setShowAdded] = useState(false) // mobile collapsible
+  const menu = booking.menuItems ?? []
+  const existing = new Set(menu.map((m) => m.dish))
+  const visible = ALL_DISHES.filter((d) => !q || d.dish.toLowerCase().includes(q.toLowerCase()))
   const sections = useMemo(() => {
     const map = new Map()
     visible.forEach((d) => {
@@ -32,38 +34,103 @@ function DishPicker({ booking, onClose }) {
       map.get(d.section).push(d)
     })
     return [...map.entries()]
-  }, [q])
+  }, [q, booking.menuItems])
+
+  // live right column — added dishes grouped under their menu-section headings
+  const addedBySection = useMemo(() => {
+    const map = new Map()
+    menu.forEach((m) => {
+      const sec = ALL_DISHES.find((d) => d.dish === m.dish)?.section ?? 'Other'
+      if (!map.has(sec)) map.set(sec, [])
+      map.get(sec).push(m)
+    })
+    return [...map.entries()]
+  }, [menu])
+
+  const AddedList = (
+    <div className="overflow-y-auto space-y-4 pr-1">
+      {addedBySection.map(([sec, items]) => (
+        <div key={sec}>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-teal-800 mb-1.5">{sec}</p>
+          <ul className="space-y-1">
+            {items.map((m) => (
+              <li key={m.dish} className="flex items-center gap-1.5 text-xs text-stone-700 bg-white rounded-lg border border-stone-200 px-2 py-1.5">
+                <span className="flex-1 min-w-0 truncate">{m.dish}</span>
+                <button onClick={() => dispatch(removeMenuItem({ id: booking.id, dish: m.dish }))} className="text-stone-300 hover:text-red-500 shrink-0" title="Remove">
+                  <X size={13} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+      {!menu.length && <p className="text-xs text-stone-400 py-6 text-center">Added dishes appear here, grouped by section.</p>}
+    </div>
+  )
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 grid place-items-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <header className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
-          <h3 className="font-display text-lg font-semibold text-teal-900">Add dishes to menu</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-stone-100"><X size={18} /></button>
+    <div className="fixed inset-0 z-50 bg-black/40 grid place-items-center p-3" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <header className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
+          <h3 className="font-display text-base font-semibold text-teal-900">Menu entry — {menu.length} added</h3>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowAdded((v) => !v)} className="md:hidden rounded-lg border border-stone-200 px-2.5 py-1 text-xs font-semibold text-stone-600">
+              Added ({menu.length})
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-stone-100"><X size={18} /></button>
+          </div>
         </header>
-        <div className="px-5 py-3 border-b border-stone-100 relative">
-          <Search size={15} className="absolute left-8 top-1/2 -translate-y-1/2 text-stone-400" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search dishes…" className="w-full rounded-lg border border-stone-200 pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-400" />
-        </div>
-        <div className="overflow-y-auto px-5 py-4 space-y-5">
-          {sections.map(([section, dishes]) => (
-            <div key={section}>
-              <p className="text-xs font-bold uppercase tracking-wide text-stone-400 mb-2">{section}</p>
-              <div className="flex flex-wrap gap-2">
-                {dishes.map((d) => (
-                  <button
-                    key={d.dish}
-                    onClick={() => dispatch(addMenuItem({ id: booking.id, dish: d.dish, group: d.group }))}
-                    className="rounded-full border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-700 hover:border-teal-500 hover:bg-teal-50 hover:text-teal-800 transition-colors"
-                  >
-                    + {d.dish}
-                  </button>
-                ))}
-              </div>
+
+        <div className="flex flex-1 min-h-0">
+          {/* left — catalogue */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <div className="px-4 py-2.5 border-b border-stone-100 relative">
+              <Search size={15} className="absolute left-7 top-1/2 -translate-y-1/2 text-stone-400" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search dishes…" className="w-full rounded-lg border border-stone-200 pl-9 pr-3 py-1.5 text-sm outline-none focus:border-teal-400" />
             </div>
-          ))}
-          {!sections.length && <p className="text-sm text-stone-400 text-center py-8">No matching dishes.</p>}
+            <div className="overflow-y-auto px-4 py-3 space-y-4">
+              {sections.map(([section, dishes]) => (
+                <div key={section}>
+                  <p className="text-xs font-bold uppercase tracking-wide text-stone-400 mb-1.5">{section}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {dishes.map((d) => {
+                      const on = existing.has(d.dish)
+                      return (
+                        <button
+                          key={d.dish}
+                          onClick={() => on
+                            ? dispatch(removeMenuItem({ id: booking.id, dish: d.dish }))
+                            : dispatch(addMenuItem({ id: booking.id, dish: d.dish, group: d.group }))}
+                          className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                            on
+                              ? 'border-teal-600 bg-teal-700 text-cream-50'
+                              : 'border-stone-200 text-stone-700 hover:border-teal-500 hover:bg-teal-50 hover:text-teal-800'
+                          }`}
+                        >
+                          {on ? '✓ ' : '+ '}{d.dish}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+              {!sections.length && <p className="text-sm text-stone-400 text-center py-8">No matching dishes.</p>}
+            </div>
+          </div>
+
+          {/* right — live added column (desktop) */}
+          <div className="hidden md:flex w-64 shrink-0 flex-col border-l border-stone-100 bg-stone-50/60 p-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-stone-400 mb-2">Added ({menu.length})</p>
+            {AddedList}
+          </div>
         </div>
+
+        {/* mobile added panel */}
+        {showAdded && (
+          <div className="md:hidden border-t border-stone-100 bg-stone-50 p-3 max-h-48 overflow-y-auto">
+            {AddedList}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -111,7 +178,7 @@ function MenuImport({ booking, onClose }) {
             <label className="block border-2 border-dashed border-stone-300 rounded-2xl p-10 text-center cursor-pointer hover:border-teal-400 hover:bg-teal-50/40 transition-colors">
               <Upload size={28} className="mx-auto text-stone-400 mb-3" />
               <p className="text-sm font-medium text-stone-700">Drop a handwritten menu photo or PDF</p>
-              <p className="text-xs text-stone-400 mt-1">{ocrEnabled ? 'AI scan via Groq — images only for now' : 'Demo mode — add VITE_GROQ_API_KEY for live OCR'} · review &amp; match before saving</p>
+              <p className="text-xs text-stone-400 mt-1">{ocrEnabled ? 'PDF text + photo scan via Groq' : 'PDF text extraction · photo scan needs Groq key'} — review &amp; match before saving</p>
               <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => e.target.files[0] && startScan(e.target.files[0])} />
             </label>
           </div>

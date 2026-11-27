@@ -1,15 +1,19 @@
-// Menu OCR via Groq vision model.
-// The Groq key lives in Supabase `settings` (authenticated-only) so it never
-// ships in the frontend bundle. VITE_GROQ_API_KEY works as a local dev override.
+// Menu OCR/extraction.
+// - PDFs: real text-layer extraction via pdf.js (no AI needed) — ignores
+//   presentation text, keeps dish-looking lines, fuzzy-matches to catalogue.
+// - Images: Groq vision model (key lives in Supabase `settings`, staff-only).
+// - VITE_GROQ_API_KEY works as a local dev override.
 
 import { supabase, supabaseReady } from '@/lib/supabase'
+import * as pdfjs from 'pdfjs-dist'
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const DEFAULT_MODEL = 'meta-llama/llama-4-maverick-17b-128e-instruct'
 
 let cached
-
-// OCR needs Supabase (for the server-side key) unless a dev env key is set.
 export const ocrEnabled = Boolean(import.meta.env.VITE_GROQ_API_KEY) || supabaseReady
 
 async function ocrConfig() {
@@ -34,22 +38,99 @@ const fileToDataURL = (file) =>
 
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
 
-// Match a scanned line to the catalogue: exact → high, substring → medium, none → low
+// ── fuzzy matching: partial names & similar wording (e.g. korma ≈ qourma) ───
+
+const lev = (a, b) => {
+  const m = a.length, n = b.length
+  if (!m) return n
+  const dp = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)])
+  for (let j = 0; j <= n; j++) dp[0][j] = j
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      )
+  return dp[m][n]
+}
+
+const wordSet = (s) => new Set(norm(s).split(' ').filter((w) => w.length > 2))
+const overlap = (a, b) => {
+  const A = wordSet(a), B = wordSet(b)
+  if (!A.size || !B.size) return 0
+  let hit = 0
+  A.forEach((w) => { if (B.has(w)) hit++ })
+  return hit / Math.max(A.size, B.size)
+}
+
+// exact → high · substring/fuzzy → medium · none → low (unmatched)
 function matchDish(raw, catalog) {
   const n = norm(raw)
+  if (!n) return { dish: null, confidence: 'low' }
   const exact = catalog.find((d) => norm(d.dish) === n)
   if (exact) return { dish: exact.dish, confidence: 'high' }
-  const partial = catalog.find((d) => n && (norm(d.dish).includes(n) || n.includes(norm(d.dish))))
+  const partial = catalog.find((d) => norm(d.dish).includes(n) || n.includes(norm(d.dish)))
   if (partial) return { dish: partial.dish, confidence: 'medium' }
+  const fuzzy = catalog.find((d) =>
+    overlap(raw, d.dish) >= 0.5 || lev(norm(raw), norm(d.dish)) <= Math.max(3, norm(d.dish).length * 0.35))
+  if (fuzzy) return { dish: fuzzy.dish, confidence: 'medium' }
   return { dish: null, confidence: 'low' }
 }
 
-/**
- * Scan a menu image with Groq vision → review rows [{raw, dish, confidence}].
- * Returns null if OCR unavailable or the file isn't an image (caller falls back).
- */
-export async function scanMenuImage(file, catalog) {
-  if (!file.type.startsWith('image/')) return null
+// ── PDF text-layer extraction (ignores presentation/decoration text) ────────
+
+// drop lines that are clearly headings, boilerplate or packaging text
+const NOISE = /^(menu|quotation|estimate|dear|respected|sir|madam|thank|regards|note|terms|condition|page|date|total|subtotal|gst|tax|address|phone|mobile|email|www|http|catering|package|event|venue|guest|pax|served by|prepared|signature|muqim|muqeem|caters|caterer's|hazratganj|lucknow)\b/i
+const isDishLine = (s) => {
+  const t = s.trim()
+  if (t.length < 4 || t.length > 60) return false
+  if (NOISE.test(t)) return false
+  if (/^\d+[\s.):-]/.test(t) && !/[a-zA-Z]{4,}/.test(t)) return false // pure numbering
+  if (/\d{5,}|@|\.com|rs\.|inr|₹/.test(t)) return false
+  return /[a-zA-Z]{4,}/.test(t) // needs real words
+}
+
+async function extractPdfLines(file) {
+  const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise
+  const lines = []
+  for (let p = 1; p <= doc.numPages; p++) {
+    const { items } = await (await doc.getPage(p)).getTextContent()
+    const rows = new Map()
+    for (const it of items) {
+      if (!it.str.trim()) continue
+      const y = Math.round(it.transform[5])
+      const row = [...rows.keys()].find((k) => Math.abs(k - y) < 3) ?? y
+      rows.set(row, [...(rows.get(row) ?? []), { x: it.transform[4], str: it.str }])
+    }
+    ;[...rows.keys()].sort((a, b) => b - a).forEach((y) => {
+      const line = rows.get(y).sort((a, b) => a.x - b.x).map((i) => i.str).join(' ').replace(/\s+/g, ' ').trim()
+      if (isDishLine(line)) lines.push(line)
+    })
+  }
+  return lines
+}
+
+async function scanPdf(file, catalog) {
+  const lines = await extractPdfLines(file)
+  if (!lines.length) return null
+  const seen = new Set()
+  return lines
+    .map((raw) => {
+      const m = matchDish(raw, catalog)
+      return { raw, dish: m.dish, confidence: m.dish ? m.confidence : 'low' }
+    })
+    .filter((r) => {
+      const k = r.dish ?? r.raw
+      if (seen.has(k)) return false
+      seen.add(k)
+      return true
+    })
+}
+
+// ── Groq vision for photos of handwritten/printed menus ─────────────────────
+
+async function scanImage(file, catalog) {
   const { key, model } = await ocrConfig()
   if (!key) return null
 
@@ -93,8 +174,25 @@ export async function scanMenuImage(file, catalog) {
     const raw = String(it.raw ?? it.dish ?? '')
     const guess = String(it.dish ?? it.raw ?? '')
     const m = matchDish(guess, catalog)
-    // model's clean name usually beats raw-line matching; retry with raw if needed
     if (!m.dish) { const m2 = matchDish(raw, catalog); return { raw, dish: m2.dish, confidence: m2.confidence } }
     return { raw, dish: m.dish, confidence: m.confidence }
   })
 }
+
+/**
+ * Scan a menu file → review rows [{raw, dish, confidence}].
+ * PDF → text-layer extraction · image → Groq vision · else/null → caller falls back.
+ */
+export async function scanMenuFile(file, catalog) {
+  try {
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      return await scanPdf(file, catalog)
+    }
+    if (file.type.startsWith('image/')) return await scanImage(file, catalog)
+  } catch (e) {
+    console.warn('menu scan failed:', e)
+  }
+  return null
+}
+
+export const scanMenuImage = scanMenuFile // back-compat
