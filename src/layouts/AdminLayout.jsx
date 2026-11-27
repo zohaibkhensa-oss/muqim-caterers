@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { supabaseReady } from '@/lib/supabase'
 import { auth } from '@/lib/db'
+import { useT, LanguageToggle } from '@/lib/i18n'
 
 const nav = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -32,6 +33,7 @@ const titles = {
 }
 
 export default function AdminLayout() {
+  const t = useT()
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const title = titles[pathname] ?? 'Booking detail'
@@ -78,7 +80,7 @@ export default function AdminLayout() {
               }
             >
               <item.icon size={17} />
-              {item.label}
+              {t(item.label)}
             </NavLink>
           ))}
         </nav>
@@ -88,15 +90,16 @@ export default function AdminLayout() {
             to="/"
             className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-cream-300/70 hover:bg-teal-800 hover:text-cream-50"
           >
-            <ExternalLink size={15} /> View storefront
+            <ExternalLink size={15} /> {t('View storefront')}
           </Link>
         </div>
       </aside>
 
       <div className="flex-1 ml-60 flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-stone-200 flex items-center justify-between px-6 sticky top-0 z-30">
-          <h1 className="font-display text-xl font-semibold text-teal-900">{title}</h1>
+          <h1 className="font-display text-xl font-semibold text-teal-900">{t(title)}</h1>
           <div className="flex items-center gap-3">
+            <LanguageToggle />
             <span className="text-sm text-stone-500 hidden sm:block">
               {session?.user?.email ?? 'Muqim Admin'}
             </span>

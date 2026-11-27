@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { Menu as MenuIcon, X } from 'lucide-react'
 import { useState } from 'react'
 import { CONTACT } from '@/data/mock'
+import { useT, LanguageToggle } from '@/lib/i18n'
 
 const links = [
   { to: '/', label: 'Home', end: true },
@@ -12,6 +13,7 @@ const links = [
 
 export default function StorefrontLayout() {
   const [open, setOpen] = useState(false)
+  const t = useT()
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -32,31 +34,35 @@ export default function StorefrontLayout() {
                   isActive ? 'text-teal-700' : 'text-stone-500 hover:text-teal-700'
                 }
               >
-                {l.label}
+                {t(l.label)}
               </NavLink>
             ))}
             <Link
               to="/book"
               className="rounded-full bg-teal-700 text-cream-50 px-5 py-2 hover:bg-teal-600 transition-colors"
             >
-              Book Now
+              {t('Book Now')}
             </Link>
+            <LanguageToggle />
           </nav>
 
-          <button className="md:hidden p-2" onClick={() => setOpen(!open)} aria-label="Menu">
-            {open ? <X size={20} /> : <MenuIcon size={20} />}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <LanguageToggle />
+            <button className="p-2" onClick={() => setOpen(!open)} aria-label="Menu">
+              {open ? <X size={20} /> : <MenuIcon size={20} />}
+            </button>
+          </div>
         </div>
 
         {open && (
           <nav className="md:hidden border-t border-cream-200 px-4 py-3 flex flex-col gap-3 text-sm font-medium bg-cream-50">
             {links.map((l) => (
               <NavLink key={l.to} to={l.to} end={l.end} onClick={() => setOpen(false)} className="text-stone-600">
-                {l.label}
+                {t(l.label)}
               </NavLink>
             ))}
             <Link to="/book" onClick={() => setOpen(false)} className="text-teal-700 font-semibold">
-              Book Now →
+              {t('Book Now →')}
             </Link>
           </nav>
         )}
@@ -74,21 +80,21 @@ export default function StorefrontLayout() {
               <span className="font-display text-lg font-semibold">Muqim Caterers</span>
             </div>
             <p className="text-sm text-cream-300/80 max-w-xs">
-              Semi catering, full catering, events and theme parties — authentic Lucknowi food, served with pride.
+              {t('Semi catering, full catering, events and theme parties — authentic Lucknowi food, served with pride.')}
             </p>
           </div>
           <div className="text-sm">
-            <h4 className="font-semibold text-cream-50 mb-3">Contact</h4>
+            <h4 className="font-semibold text-cream-50 mb-3">{t('Contact')}</h4>
             <p className="text-cream-300/80">{CONTACT.phones[0]}</p>
             <p className="text-cream-300/80">{CONTACT.phones[1]}</p>
             <p className="text-cream-300/80">{CONTACT.address}</p>
           </div>
           <div className="text-sm">
-            <h4 className="font-semibold text-cream-50 mb-3">Quick links</h4>
+            <h4 className="font-semibold text-cream-50 mb-3">{t('Quick links')}</h4>
             <div className="flex flex-col gap-2 text-cream-300/80">
-              <Link to="/packages" className="hover:text-cream-50">Menus & Packages</Link>
-              <Link to="/book" className="hover:text-cream-50">Book an event</Link>
-              <Link to="/admin" className="hover:text-cream-50">Staff login</Link>
+              <Link to="/packages" className="hover:text-cream-50">{t('Menus & Packages')}</Link>
+              <Link to="/book" className="hover:text-cream-50">{t('Book an event')}</Link>
+              <Link to="/admin" className="hover:text-cream-50">{t('Staff login')}</Link>
             </div>
           </div>
         </div>

@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import { Users, ArrowRight } from 'lucide-react'
 import { fmtINR } from '@/data/mock'
+import { useT } from '@/lib/i18n'
 
 export default function PackageCard({ pkg, linkTo = true }) {
+  const t = useT()
   const card = (
     <div className="group bg-white rounded-2xl overflow-hidden border border-cream-200 shadow-sm hover:shadow-lg transition-shadow h-full flex flex-col">
       <div className={`h-40 bg-gradient-to-br ${pkg.gradient} relative`}>
@@ -18,10 +20,10 @@ export default function PackageCard({ pkg, linkTo = true }) {
         <div className="mt-auto flex items-center justify-between">
           <div>
             <p className="text-lg font-semibold text-teal-800">
-              {fmtINR(pkg.pricePerHead)}<span className="text-xs font-normal text-stone-500"> /head</span>
+              {fmtINR(pkg.pricePerHead)}<span className="text-xs font-normal text-stone-500">{t(' /head')}</span>
             </p>
             <p className="text-xs text-stone-500 flex items-center gap-1">
-              <Users size={12} /> min {pkg.minGuests}
+              <Users size={12} /> {t('min')} {pkg.minGuests}
             </p>
           </div>
           {linkTo && (

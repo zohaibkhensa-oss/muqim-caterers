@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, CalendarDays, UtensilsCrossed, Use
 import { addBooking } from '@/features/bookings/bookingsSlice'
 import { EVENT_TYPES, CATERING_TYPES, fmtINR } from '@/data/mock'
 import { ALL_DISHES } from '@/lib/procurement'
+import { useT } from '@/lib/i18n'
 
 const STEPS = [
   { id: 'event', label: 'Event', icon: CalendarDays },
@@ -18,6 +19,7 @@ const input = 'w-full rounded-xl border border-cream-200 bg-white px-4 py-3 text
 const label = 'block text-sm font-medium text-stone-600 mb-1.5'
 
 export default function BookFlow() {
+  const t = useT()
   const [params] = useSearchParams()
   const packages = useSelector((s) => s.packages.list.filter((p) => p.active))
   const allBookings = useSelector((s) => s.bookings.list)
@@ -76,19 +78,19 @@ export default function BookFlow() {
     return (
       <div className="max-w-lg mx-auto px-4 py-24 text-center">
         <CheckCircle2 size={56} className="mx-auto text-teal-600 mb-6" />
-        <h1 className="font-display text-3xl font-semibold text-teal-900">Inquiry received!</h1>
+        <h1 className="font-display text-3xl font-semibold text-teal-900">{t('Inquiry received!')}</h1>
         <p className="text-stone-500 mt-3">
-          Our team will call you within 24 hours with a quote. Save your reference:
+          {t('Our team will call you within 24 hours with a quote. Save your reference:')}
         </p>
         <p className="mt-6 inline-block rounded-2xl bg-teal-50 border border-teal-200 px-8 py-4 font-display text-3xl font-semibold text-teal-800 tracking-wider">
           {done.ref}
         </p>
         <div className="mt-8 flex justify-center gap-4">
           <Link to={`/booking/${done.ref}`} className="rounded-full bg-teal-700 text-cream-50 px-6 py-3 font-semibold hover:bg-teal-600">
-            Track status
+            {t('Track status')}
           </Link>
           <Link to="/" className="rounded-full border border-cream-200 px-6 py-3 font-semibold text-stone-600 hover:border-teal-300">
-            Back home
+            {t('Back home')}
           </Link>
         </div>
       </div>
@@ -97,8 +99,8 @@ export default function BookFlow() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="font-display text-4xl font-semibold text-teal-900 text-center">Book your event</h1>
-      <p className="text-stone-500 text-center mt-2 mb-10">Two minutes now — a quote within 24 hours.</p>
+      <h1 className="font-display text-4xl font-semibold text-teal-900 text-center">{t('Book your event')}</h1>
+      <p className="text-stone-500 text-center mt-2 mb-10">{t('Two minutes now — a quote within 24 hours.')}</p>
 
       <div className="flex justify-center gap-2 mb-10">
         {STEPS.map((s, i) => (
@@ -113,7 +115,7 @@ export default function BookFlow() {
               {i < step ? '✓' : i + 1}
             </span>
             <span className={`text-sm font-medium hidden sm:block ${i === step ? 'text-teal-800' : 'text-stone-400'}`}>
-              {s.label}
+              {t(s.label)}
             </span>
             {i < STEPS.length - 1 && <span className="w-8 h-px bg-cream-300 mx-1" />}
           </div>
@@ -132,35 +134,35 @@ export default function BookFlow() {
           {step === 0 && (
             <div className="space-y-5">
               <div>
-                <span className={label}>What are we catering?</span>
+                <span className={label}>{t('What are we catering?')}</span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {EVENT_TYPES.map((t) => (
+                  {EVENT_TYPES.map((ev) => (
                     <button
-                      key={t}
-                      onClick={() => set('eventType')(t)}
+                      key={ev}
+                      onClick={() => set('eventType')(ev)}
                       className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
-                        form.eventType === t
+                        form.eventType === ev
                           ? 'border-teal-600 bg-teal-50 text-teal-800'
                           : 'border-cream-200 text-stone-600 hover:border-teal-300'
                       }`}
                     >
-                      {t}
+                      {t(ev)}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
-                  <label className={label}>Event date</label>
+                  <label className={label}>{t('Event date')}</label>
                   <input type="date" value={form.date} onChange={set('date')} className={input} min={new Date().toISOString().slice(0, 10)} />
                 </div>
                 <div>
-                  <label className={label}>Time</label>
+                  <label className={label}>{t('Time')}</label>
                   <input type="time" value={form.time} onChange={set('time')} className={input} />
                 </div>
               </div>
               <div>
-                <span className={label}>Catering type</span>
+                <span className={label}>{t('Catering type')}</span>
                 <div className="grid sm:grid-cols-3 gap-2">
                   {CATERING_TYPES.map((c) => (
                     <button
@@ -173,20 +175,20 @@ export default function BookFlow() {
                       }`}
                     >
                       <p className={`text-sm font-semibold ${form.cateringType === c.id ? 'text-teal-800' : 'text-stone-700'}`}>
-                        {c.label}
+                        {t(c.label)}
                       </p>
-                      <p className="text-xs text-stone-500 mt-0.5">{c.desc}</p>
+                      <p className="text-xs text-stone-500 mt-0.5">{t(c.desc)}</p>
                     </button>
                   ))}
                 </div>
               </div>
               <div className="grid sm:grid-cols-3 gap-5">
                 <div>
-                  <label className={label}>Total guests *</label>
+                  <label className={label}>{t('Total guests *')}</label>
                   <input type="number" min="10" value={form.guests} onChange={set('guests')} className={input} />
                 </div>
                 <div>
-                  <label className={label}>Veg guests (approx)</label>
+                  <label className={label}>{t('Veg guests (approx)')}</label>
                   <input
                     type="number" min="0" max={form.guests}
                     value={form.vegGuests}
@@ -196,7 +198,7 @@ export default function BookFlow() {
                   />
                 </div>
                 <div>
-                  <label className={label}>Non-veg guests</label>
+                  <label className={label}>{t('Non-veg guests')}</label>
                   <input
                     value={Math.max(Number(form.guests) - Number(form.vegGuests || 0), 0)}
                     readOnly
@@ -205,15 +207,15 @@ export default function BookFlow() {
                 </div>
               </div>
               <div>
-                <label className={label}>Venue / area</label>
-                <input value={form.venue} onChange={set('venue')} placeholder="e.g. City Banquets, Gomti Nagar" className={input} />
+                <label className={label}>{t('Venue / area')}</label>
+                <input value={form.venue} onChange={set('venue')} placeholder={t('e.g. City Banquets, Gomti Nagar')} className={input} />
               </div>
             </div>
           )}
 
           {step === 1 && (
             <div className="space-y-4">
-              <span className={label}>Pick a package (or go custom below)</span>
+              <span className={label}>{t('Pick a package (or go custom below)')}</span>
               <div className="grid sm:grid-cols-2 gap-3">
                 {packages.map((p) => (
                   <button
@@ -226,34 +228,34 @@ export default function BookFlow() {
                     }`}
                   >
                     <p className="font-semibold text-sm text-teal-900">{p.name}</p>
-                    <p className="text-xs text-stone-500 mt-1">{fmtINR(p.pricePerHead)}/head · min {p.minGuests}</p>
+                    <p className="text-xs text-stone-500 mt-1">{fmtINR(p.pricePerHead)}{t(' /head')} · {t('min')} {p.minGuests}</p>
                   </button>
                 ))}
               </div>
               <div>
-                <label className={label}>Or describe your own menu / requirements</label>
+                <label className={label}>{t('Or describe your own menu / requirements')}</label>
                 <textarea
                   value={form.customMenu}
                   onChange={set('customMenu')}
                   rows={3}
-                  placeholder="e.g. Vegetarian only, live chaat counter, Jain options for 20 guests…"
+                  placeholder={t('e.g. Vegetarian only, live chaat counter, Jain options for 20 guests…')}
                   className={input}
                 />
               </div>
               <div>
-                <label className={label}>Pick specific dishes (optional — requests, we confirm the final menu)</label>
+                <label className={label}>{t('Pick specific dishes (optional — requests, we confirm the final menu)')}</label>
                 <div className="rounded-xl border border-cream-200 p-3">
                   <div className="relative mb-2">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
                     <input
                       value={dishQuery} onChange={(e) => setDishQuery(e.target.value)}
-                      placeholder="Search the full menu — e.g. galouti, biryani, phirni…"
+                      placeholder={t('Search the full menu — e.g. galouti, biryani, phirni…')}
                       className="w-full rounded-lg border border-cream-200 pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-400"
                     />
                   </div>
                   {form.dishes.length > 0 && (
                     <p className="text-xs text-teal-800 bg-teal-50 rounded-lg px-3 py-2 mb-2">
-                      {form.dishes.length} dish{form.dishes.length > 1 ? 'es' : ''} selected
+                      {form.dishes.length} {t('dishes selected')}
                     </p>
                   )}
                   <div className="max-h-56 overflow-y-auto flex flex-wrap gap-1.5">
@@ -283,7 +285,7 @@ export default function BookFlow() {
               </div>
               {estimate != null && (
                 <p className="text-sm bg-gold-300/30 border border-gold-400/40 rounded-xl px-4 py-3 text-teal-900">
-                  Rough estimate for {form.guests} guests: <strong>{fmtINR(estimate)}</strong> (final quote may vary)
+                  {t('Rough estimate for')} {form.guests} {t('guests:')} <strong>{fmtINR(estimate)}</strong> {t('(final quote may vary)')}
                 </p>
               )}
             </div>
@@ -293,37 +295,37 @@ export default function BookFlow() {
             <div className="space-y-5">
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
-                  <label className={label}>Your name *</label>
-                  <input value={form.name} onChange={set('name')} placeholder="Full name" className={input} />
+                  <label className={label}>{t('Your name *')}</label>
+                  <input value={form.name} onChange={set('name')} placeholder={t('Full name')} className={input} />
                 </div>
                 <div>
-                  <label className={label}>Phone *</label>
+                  <label className={label}>{t('Phone *')}</label>
                   <input value={form.phone} onChange={set('phone')} placeholder="+91 …" className={input} />
                 </div>
               </div>
               <div>
-                <label className={label}>Email (optional)</label>
+                <label className={label}>{t('Email (optional)')}</label>
                 <input type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" className={input} />
               </div>
               <div>
-                <label className={label}>Anything else we should know?</label>
-                <textarea value={form.notes} onChange={set('notes')} rows={3} placeholder="Parking, floor, timings, dietary needs…" className={input} />
+                <label className={label}>{t('Anything else we should know?')}</label>
+                <textarea value={form.notes} onChange={set('notes')} rows={3} placeholder={t('Parking, floor, timings, dietary needs…')} className={input} />
               </div>
             </div>
           )}
 
           {step === 3 && (
             <div>
-              <h3 className="font-display text-xl font-semibold text-teal-900 mb-5">Review your inquiry</h3>
+              <h3 className="font-display text-xl font-semibold text-teal-900 mb-5">{t('Review your inquiry')}</h3>
               <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                 {[
-                  ['Event', form.eventType],
-                  ['Catering type', CATERING_TYPES.find((c) => c.id === form.cateringType)?.label],
-                  ['Date', `${form.date}${form.time ? ` · ${form.time}` : ''}`],
-                  ['Guests', `${form.guests}${form.vegGuests ? ` (${form.vegGuests} veg · ${Math.max(Number(form.guests) - Number(form.vegGuests), 0)} non-veg)` : ''}`],
-                  ['Venue', form.venue],
-                  ['Menu', `${pkg ? pkg.name : 'Custom request'}${form.dishes.length ? ` · ${form.dishes.length} dishes picked` : ''}`],
-                  ['Contact', `${form.name} · ${form.phone}`],
+                  [t('Event'), t(form.eventType)],
+                  [t('Catering type'), t(CATERING_TYPES.find((c) => c.id === form.cateringType)?.label)],
+                  [t('Date'), `${form.date}${form.time ? ` · ${form.time}` : ''}`],
+                  [t('Guests'), `${form.guests}${form.vegGuests ? ` (${form.vegGuests} ${t('veg')} · ${Math.max(Number(form.guests) - Number(form.vegGuests), 0)} ${t('non-veg')})` : ''}`],
+                  [t('Venue'), form.venue],
+                  [t('Menu'), `${pkg ? pkg.name : t('Custom request')}${form.dishes.length ? ` · ${form.dishes.length} ${t('dishes picked')}` : ''}`],
+                  [t('Contact'), `${form.name} · ${form.phone}`],
                 ].map(([k, v]) => (
                   <div key={k}>
                     <dt className="text-stone-400 text-xs uppercase tracking-wide">{k}</dt>
@@ -333,7 +335,7 @@ export default function BookFlow() {
               </dl>
               {estimate != null && (
                 <p className="mt-6 text-sm bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 text-teal-900">
-                  Estimated total: <strong className="text-lg">{fmtINR(estimate)}</strong>
+                  {t('Estimated total:')} <strong className="text-lg">{fmtINR(estimate)}</strong>
                 </p>
               )}
             </div>
@@ -347,7 +349,7 @@ export default function BookFlow() {
           disabled={step === 0}
           className="inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-stone-600 disabled:opacity-30 hover:text-teal-700"
         >
-          <ArrowLeft size={16} /> Back
+          <ArrowLeft size={16} /> {t('Back')}
         </button>
         {step < 3 ? (
           <button
@@ -355,14 +357,14 @@ export default function BookFlow() {
             disabled={!canNext}
             className="inline-flex items-center gap-2 rounded-full bg-teal-700 text-cream-50 px-6 py-3 text-sm font-semibold hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Continue <ArrowRight size={16} />
+            {t('Continue')} <ArrowRight size={16} />
           </button>
         ) : (
           <button
             onClick={submit}
             className="inline-flex items-center gap-2 rounded-full bg-gold-500 text-teal-950 px-7 py-3 text-sm font-bold hover:bg-gold-400"
           >
-            Submit inquiry <CheckCircle2 size={16} />
+            {t('Submit inquiry')} <CheckCircle2 size={16} />
           </button>
         )}
       </div>
